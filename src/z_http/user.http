@@ -1,0 +1,152 @@
+#Lấy thông tin user hoặc đăng nhập
+GET http://localhost:5000/api/users/profile
+Content-Type: application/json
+Authorization: Bearer {token}
+
+body: none
+req: 
+    200: {
+        success: boolean,
+        message: string,
+        user: {
+            uid: string,
+            username: string,
+            gender: string,
+            dob: string,       ['01/01/1990']
+            email: string,
+            tel: string,
+            location: string,
+            createdAt: string,     ['01/01/1990']
+            role: string
+        }
+    }
+    400: {
+        success: boolean,
+        error: string
+    }
+
+
+#Đăng ký tài khoản
+POST http://localhost:5000/api/users/create
+Content-Type: application/json
+Authorization: Bearer {token}
+
+body: none
+req: 
+    200: {
+        success: boolean,
+        message: string,
+        user: {
+            uid: string,
+            username: string,
+            gender: string,
+            dob: string,       ['01/01/1990']
+            email: string,
+            tel: string,
+            location: string,
+            createdAt: string,     ['01/01/1990']
+            role: string
+        }
+    }
+    400: {
+        success: boolean,
+        error: string
+    }
+
+
+#Quên mật khẩu
+PUT http://localhost:5000/api/users/forgot-password
+Content-Type: application/json
+
+body: {
+    email: string,
+    newPassword: string,
+    confirmPassword: string,
+    code: string,
+    codeEnter: string
+}
+req: 
+    200: {
+        success: boolean,
+        message: string,
+    }
+    400: {
+        success: boolean,
+        error: string
+    }
+
+#Đổi mật khẩu
+PUT http://localhost:5000/api/users/change-password
+Content-Type: application/json
+Authorization: Bearer {token}
+
+body: {
+    newPassword: string,
+    confirmPassword: string,
+    code: string,
+    codeEnter: string
+}
+req: 
+    200: {
+        success: boolean,
+        message: string,
+    }
+    400: {
+        success: boolean,
+        error: string
+    }
+
+
+#Cập nhật thông tin
+PUT http://localhost:5000/api/users/update
+Content-Type: application/json
+Authorization: Bearer {token}
+
+body {
+    uid: string,
+    username: string,
+    gender: string,
+    dob: string,       ['01/01/1990']
+    email: string,
+    tel: string,
+    location: string,
+    createdAt: string,     ['01/01/1990']
+    role: string
+}
+req:
+    200: {
+        success: boolean,
+        message: string,
+        user: {
+            uid: string,
+            username: string,
+            gender: string,
+            dob: string,       ['01/01/1990']
+            email: string,
+            tel: string,
+            location: string,
+            createdAt: string,     ['01/01/1990']
+            role: string
+        }
+    }
+    400: {
+        success: boolean,
+        error: string
+    }
+
+
+#Xóa thông tin người dùng
+DELETE http://localhost:5000/api/users/delete
+Content-Type: application/json
+Authorization: Bearer {token}
+
+body: { userUID: string }
+req:
+    200: {
+        success: boolean,
+        message: string,
+    }
+    400: {
+        success: boolean,
+        error: string
+    }
