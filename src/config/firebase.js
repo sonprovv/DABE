@@ -2,7 +2,7 @@ const admin = require('firebase-admin');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const serviceAccount = require(process.env.FB);
+const serviceAccount = JSON.parse(process.env.FB);
 
 const storageBucket = 'jobs-4c9e3.appspot.com';
 
