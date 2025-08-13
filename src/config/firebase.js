@@ -1,6 +1,8 @@
 const admin = require('firebase-admin');
+const dotenv = require('dotenv');
+dotenv.config();
 
-const serviceAccount = require('./jobs-4c9e3-firebase-adminsdk-fbsvc-1605124f51.json');
+const serviceAccount = require(process.env.FB);
 
 const storageBucket = 'jobs-4c9e3.appspot.com';
 
