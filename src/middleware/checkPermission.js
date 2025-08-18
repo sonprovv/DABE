@@ -15,20 +15,20 @@ const checkPermission = (roles) => {
             const decodedToken = await auth.verifyIdToken(idToken);
             req.user = decodedToken;
 
-            const userDoc = await db.collection('users').doc(req.user.uid).get();
-            if (!userDoc.exists) {
-                return failResponse(res, 400, "Not found user");
+            const accountDoc = await db.collection('accounts').doc(req.user.uid).get();
+            if (!accountDoc.exists) {
+                return failResponse(res, 400, "Không tìm thấy thông tin");
             }
 
-            const userData = userDoc.data();
+            const accountData = accountDoc.data();
             
-            if (!roles.includes(String(userData.role).trim())) {
-                return failResponse(res, 403, "No access allowed");
+            if (!roles.includes(String(accountData.role).trim())) {
+                return failResponse(res, 403, "Không được phép truy cập");
             }
 
             next();
         } catch (error) {
-            return failResponse(res, 403, "Invalid token");
+            return failResponse(res, 403, "Token không hợp lệ");
         }
     }
 }

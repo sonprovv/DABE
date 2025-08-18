@@ -1,91 +1,57 @@
-const { db } = require('../config/firebase');
-const UserModel = require("../models/UserModel");
+const { db } = require("../config/firebase");
 
 class UserService {
     constructor() {}
-
-    async createUser(rawData) {
-        try {
-            const validated = await UserModel.validateAsync(rawData, { stripUnknown: true });
-
-            const { uid, ...data} = validated;
-
-            await db.collection('users').doc(uid).set(data);
-            return { uid: uid, ...data};
-        } catch (err) {
-            if (err.isJoi && err.details?.length > 0) {
-                throw new Error(err.details[0].message);
-            }
-            throw new Error(err.message);
-        }
-    }
 
     async getByUID(uid) {
         try {
             const userDoc = await db.collection('users').doc(uid).get();
 
             if (!userDoc.exists) {
-                throw new Error('Not found user');
+                throw new Error("Người dùng không tồn tại")
             }
 
-            const userData = userDoc.data();
-
-            if (userData.role==='viewer') userData.dob = (userData.dob).toDate();
-            else if (userData.role==='worker') userData.createdAt = (userData.createdAt).toDate();
-
-            const validated = await UserModel.validateAsync(
-                { uid, ...userData}, 
-                { stripUnknown: true }
-            );
-
-            return { uid: uid, ...validated };
+            return { uid, ...userDoc.data() };
         } catch (err) {
-            if (err.isJoi && err.details?.length > 0) {
-                throw new Error(err.details[0].message);
-            }
-            throw new Error(err.message);
+            console.error(err.message);
+            throw new Error("Không tìm thấy thông tin")
         }
     }
 
-    async updateUser(rawData) {
+    async createUser(validated) {
+        const {uid, ...data} = validated;
         try {
-            const validated = await UserModel.validateAsync(rawData, { stripUnknown: true });
+            await db.collection('users').doc(uid).set(data);
 
-            const {uid, ...data} = validated;
+            return validated;
+        } catch (err) {
+            console.error(err.message);
+            throw new Error("Đăng ký không thành công")
+        }
+    }
 
+    async updateUser(validated) {
+        const {uid, ...data} = validated;
+        try {
             const userRef = db.collection('users').doc(uid);
             await userRef.update(data);
 
             const updatedUser = await userRef.get();
 
-            if (!updatedUser.exists) {
-                throw new Error('Not found user');
-            }
-
-            const userData = updatedUser.data();
-
-            if (userData.role==='viewer') userData.dob = (userData.dob).toDate();
-            else if (userData.role==='worker') userData.createdAt = (userData.createdAt).toDate();
-
-            return { uid: uid, ...userData}
+            return updatedUser;
         } catch (err) {
-            if (err.isJoi && err.details?.length > 0) {
-                throw new Error(err.details[0].message);
-            }
-            throw new Error(err.message);
+            console.error(err.message);
+            throw new Error("Cập nhật không thành công")
         }
     }
 
-    async deleteUser(userUID) {
+    async deleteUser(uid) {
         try {
-            const userRef = db.collection('users').doc(userUID);
-
+            const userRef = db.collection('users').doc(uid);
             await userRef.delete();
         } catch (err) {
-            if (err.isJoi && err.details?.length > 0) {
-                throw new Error(err.details[0].message);
-            }
-            throw new Error(err.message);
+            console.error(err.message);
+            throw new Error("Xóa người dùng không thành công")
         }
     }
 }

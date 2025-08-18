@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Ảnh</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 400px; margin: 40px auto; }
+    .preview { margin: 16px 0; }
+    img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
+    .message { margin-top: 16px; }
+    .url-link { word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h2>Upload ảnh</h2>
+  <form id="uploadForm">
+    <input type="file" name="image" id="imageInput" accept="image/*" required />
+    <div class="preview" id="preview"></div>
+    <button type="submit">Upload</button>
+  </form>
+  <div class="message" id="message"></div>
+
+  <script>
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const message = document.getElementById('message');
+    const uploadForm = document.getElementById('uploadForm');
+
+    imageInput.addEventListener('change', function() {
+      const file = this.files[0];
+      preview.innerHTML = '';
+      if (file) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        preview.appendChild(img);
+      }
+    });
+
+    uploadForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      message.textContent = '';
+      const file = imageInput.files[0];
+      if (!file) {
+        message.textContent = 'Vui lòng chọn ảnh!';
+        return;
+      }
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const res = await fetch('http://localhost:5000/api/images/upload', {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            message.innerHTML = `Upload thành công!<br><span class="url-link"><a href="${data.url}" target="_blank">${data.url}</a></span>`;
+          } else {
+            message.textContent = 'Upload thành công nhưng không nhận được URL!';
+          }
+        } else {
+          message.textContent = 'Upload thất bại!';
+        }
+      } catch (err) {
+        message.textContent = 'Lỗi khi upload!';
+      }
+    });
+  </script>
+</body>
+</html>
