@@ -12,9 +12,7 @@ const options = {
       description: "API documentation using Swagger",
     },
     servers: [
-      {
-        url: "/"
-      },
+      { url: '/' },
     ],
     components: {
       securitySchemes: {
@@ -26,9 +24,7 @@ const options = {
       },
     },
     security: [
-      {
-        bearerAuth: [],
-      },
+      { bearerAuth: [], },
     ],
   },
   apis: ["./src/routes/DocRouter.js"],
