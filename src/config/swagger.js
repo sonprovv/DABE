@@ -12,7 +12,7 @@ const options = {
       description: "API documentation using Swagger",
     },
     servers: [
-      { url: 'https://bedatn-eosin.vercel.app' },
+      { url: '/' },
     ],
     components: {
       securitySchemes: {
