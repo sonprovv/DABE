@@ -7,11 +7,31 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/swagger.json", (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send(swaggerSpec);
+  res.json(swaggerSpec);
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Route Swagger UI dùng CDN
+app.get("/api-docs", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Swagger UI</title>
+        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
+      </head>
+      <body>
+        <div id="swagger-ui"></div>
+        <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+        <script>
+          const ui = SwaggerUIBundle({
+            url: '/swagger.json',
+            dom_id: '#swagger-ui',
+          });
+        </script>
+      </body>
+    </html>
+  `);
+});
 
 const ImageRouter = require('./src/routes/ImageRouter');
 app.use('/api/images', ImageRouter);
