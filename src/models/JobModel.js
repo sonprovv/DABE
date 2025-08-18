@@ -1,61 +1,45 @@
-const Joi = require('joi');
+class JobModel {
+    constructor(uid, userID, serviceType, workerQuantity, status, price, isWeek, dayOfWeek, createdAt) {
+        this.uid = uid;
+        this.userID = userID;
+        this.serviceType = serviceType;
+        this.workerQuantity = workerQuantity;
+        this.status = status;
+        this.price = price;
+        this.isWeek = isWeek;
+        this.dayOfWeek = dayOfWeek;
+        this.createdAt = createdAt;
+    }
+}
 
-const JobModel = Joi.object({
-    workerID: Joi.string().required(),
-    categoryID: Joi.string().required(),
-    name: Joi.string().required(),
-    des: Joi.string().default('No updated'),
-    role: Joi.string().valid('technical', 'surface', 'takecare').required(),
+class CleaningJobModel extends JobModel {
+    constructor(uid, userID, serviceType, workerQuantity, status, price, isWeek, dayOfWeek, durationID, services, isCooking, isIroning) {
+        super(uid, userID, serviceType, workerQuantity, status, price, isWeek, dayOfWeek);
+        this.durationID = durationID;
+        this.services = services; //List serviceID
+        this.isCooking = isCooking;
+        this.isIroning = this.isIroning;
+    }
+}
 
-    // role: technical
-    salary: Joi.alternatives().conditional('role', {
-        is: 'technical',
-        then: Joi.number().min(0).required(),
-        otherwise: Joi.forbidden()
-    }),
+class HealthcareJobModel extends JobModel {
+    constructor(uid, userID, serviceType, workerQuantity, status, price, isWeek, dayOfWeek, shiftID, isWeek, services) {
+        super(uid, userID, serviceType, workerQuantity, status, price, isWeek, dayOfWeek);
+        this.shiftID = shiftID;
+        this.services = services;
+    }
+}
 
-    // role: surface
-    acreage: Joi.alternatives().conditional('role', {
-        is: 'surface',
-        then: Joi.array().items(
-            Joi.object({
-                min: Joi.number().required(),
-                max: Joi.number(),
-                salary: Joi.number().required()
-            })
-        ),
-        otherwise: Joi.forbidden()
-    }),
+class HealthcareDetailsModel {
+    constructor(uid, healthcareServiceID, quantity) {
+        this.uid = uid;
+        this.healthcareServiceID = healthcareServiceID;
+        this.quantity = quantity;
+    }
+}
 
-    // role: technical and surface
-    schedule: Joi.alternatives().conditional('role', {
-        is: Joi.valid('technical', 'surface'),
-        then: Joi.array().items(
-            Joi.object({
-                dayparts: Joi.string().required(),
-                startTime: Joi.string().required(),
-                endTime: Joi.string().required()
-            })
-        ),
-        otherwise: Joi.forbidden()
-    }),
-
-    // role: takecare
-    details: Joi.alternatives().conditional('role', {
-        is: 'takecare',
-        then: Joi.array().items(
-            Joi.object({
-                child: Joi.number().required(),    // childCareFee
-                senior: Joi.number().required(),   // seniorCareFee
-                disabled: Joi.number().required()  // disabilityCareFee
-            })
-        ),
-        otherwise: Joi.forbidden()
-    })
-})
-
-const JobModelWithUID = JobModel.keys({
-    uid: Joi.string().required()
-})
-
-module.exports = { JobModel, JobModelWithUID };
+module.exports = {
+    CleaningJobModel,
+    HealthcareJobModel,
+    HealthcareDetailsModel
+}

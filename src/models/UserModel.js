@@ -1,46 +1,40 @@
-const Joi = require('joi');
+class UserModel {
+    constructor(uid, username, gender, dob, avatar, tel, location, email, role) {
+        this.uid = uid;
+        this.username = username;
+        this.gender = gender;
+        this.dob = this.formatDate(
+            typeof dob?.toDate === 'function' ? dob.toDate() : dob
+        );
+        this.avatar = avatar;
+        this.email = email;
+        this.tel = tel;
+        this.location = location;
+        this.role = role;
+    }
 
-const UserModel = Joi.object({
-  uid: Joi.string().required(),
-  username: Joi.string().required(),
-  avatar: Joi.string().default('https://res.cloudinary.com/dvofgx21o/image/upload/v1754337546/jobs/byhangkho4twacw1owri.png'),
-  background: Joi.string().default('https://res.cloudinary.com/dvofgx21o/image/upload/v1754337920/jobs/pnjgsgpqjwenorbmqsqj.jpg'),
-  email: Joi.string().email().required(),
-  tel: Joi.string().min(10).default('No updated'),
-  location: Joi.string().default('No updated'),
-  role: Joi.string().valid('admin', 'worker', 'viewer').required(),
+    formatDate = (date) => {
+        const d = new Date(date);
+        const day = d.getDate().toString().padStart(2, '0');
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const year = d.getFullYear().toString();
 
-  // role: viewer
-  gender: Joi.alternatives().conditional('role', {
-    is: 'viewer',
-    then: Joi.string().valid('Male', 'Female', 'Other').default('Male'),
-    otherwise: Joi.forbidden()
-  }),
+        return `${day}/${month}/${year}`;
+    }
 
-  dob: Joi.alternatives().conditional('role', {
-    is: 'viewer',
-    then: Joi.date().default(() => new Date('1990-01-01')),
-    otherwise: Joi.forbidden()
-  }),
-
-  // role: worker
-  offical: Joi.alternatives().conditional('role', {
-    is: 'worker',
-    then: Joi.boolean().default(false),
-    otherwise: Joi.forbidden()
-  }),
-
-  createdAt: Joi.alternatives().conditional('role', {
-    is: 'worker',
-    then: Joi.date().default(() => new Date()),
-    otherwise: Joi.forbidden()
-  }),
-  
-  description: Joi.alternatives().conditional('role', {
-    is: 'worker',
-    then: Joi.string().default('No updated'),
-    otherwise: Joi.forbidden()
-  })
-});
+    getInfo = () => {
+        return {
+            uid: this.uid,
+            username: this.username,
+            gender: this.gender,
+            dob: this.dob,
+            avatar: this.avatar,
+            email: this.email,
+            tel: this.tel,
+            location: this.location,
+            role: this.role
+        }
+    }
+}
 
 module.exports = UserModel;
