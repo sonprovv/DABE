@@ -6,11 +6,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+require('./src/routes/DocRouter');
+
 app.get("/swagger.json", (req, res) => {
-  res.json(swaggerSpec);
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
 });
 
-// Route Swagger UI dùng CDN
 app.get("/api-docs", (req, res) => {
   res.send(`
     <!DOCTYPE html>
