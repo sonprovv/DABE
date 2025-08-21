@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 
 const app = express();
 app.use(cors());
