@@ -1,9 +1,12 @@
-const express = require('express');
+const express = require('express')
 const cors = require('cors');
+const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json());;
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const ImageRouter = require('./src/routes/ImageRouter');
 app.use('/api/images', ImageRouter);
@@ -20,4 +23,7 @@ app.use('/api/services', ServiceRouter);
 const JobRouter = require('./src/routes/JobRouter');
 app.use('/api/jobs', JobRouter);
 
-module.exports = app; 
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log('Server running...')
+});
