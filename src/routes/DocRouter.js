@@ -34,26 +34,8 @@
  *      responses:
  *          200:
  *              description: Thành công
- *              content:
- *                  application/json:
- *                      schema:
- *                          type: object
- *                          properties:
- *                              success:
- *                                  type: boolean
- *                                  example: true
- *                              message:
- *                                  type: string
- *                                  example: Thành công
- *                              code:
- *                                  type: string
- *                                  example: 12345
  *          400:
  *              description: Không thành công
- *              content:
- *                  application/json:
- *                      schema:
- *                          $ref: '#/components/schemas/ErrorResponse'
  */
 
 /**
@@ -64,6 +46,161 @@
  *      tags: [User]
  *      security:
  *          - bearerAuth: []
+ *      responses:
+ *          200:
+ *              description: Thành công
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/users/create:
+ *  post:
+ *      summary: Tạo người dùng mới dùng khi đăng ký
+ *      tags: [User]
+ *      sercurity:
+ *          - bearerAuth: []
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required: 
+ *                          - role
+ *                      properties:
+ *                          role:
+ *                              type: string
+ *                              example: user
+ *      responses:
+ *          200:
+ *              description: Thành công
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/users/forgot-password:
+ *  put:
+ *      summary: Quên mật khẩu
+ *      tags: [User]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - email
+ *                          - newPassword
+ *                          - confirmPassword
+ *                          - code
+ *                          - codeEnter
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                              example: kain411thien@gmail.com
+ *                          newPassword:
+ *                              type: string
+ *                              example: 411411
+ *                          confirmPassword:
+ *                              type: string
+ *                              example: 411411
+ *                          code:
+ *                              type: string
+ *                              example: 123456
+ *                          codeEnter:
+ *                              type: string
+ *                              example: 123456
+ *      responses:
+ *          200:
+ *              description: Thành công
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/users/change-password:
+ *  put:
+ *      summary: Quên mật khẩu
+ *      tags: [User]
+ *      sercurity:
+ *          - bearerAuth: []
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - newPassword
+ *                          - confirmPassword
+ *                          - code
+ *                          - codeEnter
+ *                      properties:
+ *                          newPassword:
+ *                              type: string
+ *                              example: 411411
+ *                          confirmPassword:
+ *                              type: string
+ *                              example: 411411
+ *                          code:
+ *                              type: string
+ *                              example: 123456
+ *                          codeEnter:
+ *                              type: string
+ *                              example: 123456
+ *      responses:
+ *          200:
+ *              description: Thành công
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/users/update:
+ *  put:
+ *      summary: Cập nhật thông tin người dùng
+ *      tags: [User]
+ *      sercurity:
+ *          - bearerAuth: []
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/User'
+ *      responses:
+ *          200: 
+ *              description: Thành công
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/users/delete:
+ *  delete:
+ *      summary: Xóa người dùng
+ *      tags: [User]
+ *      sercurity:
+ *          - bearerAuth: []
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - userID
+ *                      properties:
+ *                          userID:
+ *                              type: string
+ *                              example: idUser001
  *      responses:
  *          200:
  *              description: Thành công
@@ -88,6 +225,164 @@
  *      responses:
  *          200:
  *              description: Thông tin service và duration của từng loại
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/jobs/{serviceType}:
+ *  get:
+ *      summary: Thông tin công việc
+ *      tags: [Job]
+ *      parameters:
+ *          - in: path
+ *            name: serviceType
+ *            required: true
+ *            schema:
+ *              type: string
+ *              enum: [cleaning, healthcare]
+ *              example: cleaning
+ *      responses:
+ *          200:
+ *              description: Thành công
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/jobs/cleaning:
+ *  post:
+ *      summary: Tạo công việc mới
+ *      tags: [Job]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          user:
+ *                              $ref: '#/components/schemas/User'
+ *                          serviceType:
+ *                              type: string
+ *                              example: CLEANING
+ *                          startTime:
+ *                              type: string
+ *                              example: 14:00
+ *                          price:
+ *                              type: integer
+ *                              format: int64
+ *                              example: 500000
+ *                          workerQuantity:
+ *                              type: integer
+ *                              format: int32
+ *                          isWeek:
+ *                              type: boolean
+ *                              example: true
+ *                          dayOfWeek:
+ *                              type: array
+ *                              items:
+ *                                  type: string
+ *                              example: [MONDAY, FRIDAY, SUNDAY]
+ *                          isCooking:
+ *                              type: boolean
+ *                              example: false
+ *                          isIroning:
+ *                              type: boolean
+ *                              example: false
+ *                          duration:
+ *                              $ref: '#/components/schemas/Duration'
+ *                          services:
+ *                              type: array
+ *                              items:
+ *                                  $ref: '#/components/schemas/CleaningService'
+ *                              example:
+ *                                  - uid: idService01
+ *                                    serviceType: CLEANING
+ *                                    serviceName: Phòng khách
+ *                                    image: livingroom.png
+ *                                    tasks: [ Lau và quét nhà, Lau tất cả các bề mặt ]
+ *                                  - uid: idService02
+ *                                    serviceType: CLEANING
+ *                                    serviceName: Phòng ngủ
+ *                                    image: bedroom.png
+ *                                    tasks: [ Lau tất cả các bề mặt, Sắp xếp giường, Thay ga ]
+ *      responses:
+ *          200:
+ *              description: Thành công
+ *          400:
+ *              description: Không thành công
+ */
+
+/**
+ * @swagger
+ * /api/jobs/healthcare:
+ *  post:
+ *      summary: Tạo công việc mới
+ *      tags: [Job]
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          user:
+ *                              $ref: '#/components/schemas/User'
+ *                          serviceType:
+ *                              type: string
+ *                              example: CLEANING
+ *                          startTime:
+ *                              type: string
+ *                              example: 14:00
+ *                          price:
+ *                              type: integer
+ *                              format: int64
+ *                              example: 500000
+ *                          workerQuantity:
+ *                              type: integer
+ *                              format: int32
+ *                          isWeek:
+ *                              type: boolean
+ *                              example: true
+ *                          dayOfWeek:
+ *                              type: array
+ *                              items:
+ *                                  type: string
+ *                              example: [MONDAY, FRIDAY, SUNDAY]
+ *                          shift:
+ *                              $ref: '#/components/schemas/Shift'
+ *                          services:
+ *                              type: array
+ *                              items:
+ *                                  type: object
+ *                                  properties:
+ *                                      healcareService:
+ *                                          $ref: '#/components/schemas/HealthcareService'
+ *                                      quantity:
+ *                                          type: integer
+ *                                          format: int32
+ *                                          example: 2
+ *                              example:
+ *                                  - healcareService:
+ *                                      uid: idHealthcareService01
+ *                                      serviceType: HEALTHCARE
+ *                                      serviceName: Trẻ em
+ *                                      duties: [ Cho ăn uống đúng giờ, Chơi cùng với trẻ ]
+ *                                      excludedTasks: [ Tránh xa thiết bị điện ]
+ *                                    quantity: 2
+ *                                  - healthcareService:
+ *                                      uid: idHealthcareService02
+ *                                      serviceType: HEALTHCARE
+ *                                      serviceName: Người khuyết tật
+ *                                      duties: [ Cho ăn uống đúng giờ, Trò chuyện cùng ]
+ *                                      excludedTasks: [ Không làm gì cả ]
+ *                                    quantity: 3
+ *      responses:
+ *          200:
+ *              description: Thành công
  *          400:
  *              description: Không thành công
  */
