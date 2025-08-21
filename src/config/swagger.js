@@ -1,5 +1,3 @@
-const path = require('path');
-
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
 
@@ -27,7 +25,7 @@ const options = {
       { bearerAuth: [], },
     ],
   },
-  apis: ["./src/routes/*.js],
+  apis: ["./src/routes/DocRouter.js"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
