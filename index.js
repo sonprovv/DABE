@@ -6,8 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 const ImageRouter = require('./src/routes/ImageRouter');
 app.use('/api/images', ImageRouter);
 
