@@ -1,5 +1,5 @@
 const { db } = require("../config/firebase");
-const { formatDate } = require("../utils/formatDate");
+const { formatDate, formatDateAndTime } = require("../utils/formatDate");
 const { CleaningJobGetvalid, HealthcareJobGetValid } = require("../utils/validator/JobValid");
 const AccountService = require("./AccountService");
 const ServiceService = require("./ServiceService");
@@ -56,13 +56,15 @@ class JobService {
                 const tmp = {
                     uid: doc.id,
                     serviceType: doc.data().serviceType,
-                    startTime: doc.data().startTime,
+                    startTime: formatDateAndTime(doc.data().startTime.toDate()),
+                    endTime: formatDateAndTime(doc.data().endTime.toDate()),
                     workerQuantity: doc.data().workerQuantity,
-                    status: doc.data().status,
+                    workingHours: doc.data().workingHours,
                     price: doc.data().price,
                     isWeek: doc.data().isWeek,
                     dayOfWeek: doc.data().dayOfWeek,
                     createdAt: formatDate(doc.data().createdAt.toDate()),
+                    status: doc.data().status,
                     isCooking: doc.data().isCooking,
                     isIroning: doc.data().isIroning,
                 }
@@ -100,13 +102,15 @@ class JobService {
                 const tmp = {
                     uid: doc.id,
                     serviceType: doc.data().serviceType,
-                    startTime: doc.data().startTime,
+                    startTime: formatDateAndTime(doc.data().startTime.toDate()),
+                    endTime: formatDateAndTime(doc.data().endTime.toDate()),
                     workerQuantity: doc.data().workerQuantity,
-                    status: doc.data().status,
+                    workingHours: doc.data().workingHours,
                     price: doc.data().price,
                     isWeek: doc.data().isWeek,
                     dayOfWeek: doc.data().dayOfWeek,
                     createdAt: formatDate(doc.data().createdAt.toDate()),
+                    status: doc.data().status,
                 }
                 const account = await AccountService.getByUID(doc.data().userID);
                 const user = await UserService.getByUID(doc.data().userID);
@@ -130,7 +134,6 @@ class JobService {
                 tmp['user'] = user;
                 tmp['shift'] = shift;
                 tmp['services'] = services;
-                // console.log(tmp)
                 const validated = await HealthcareJobGetValid.validateAsync(tmp, { stripUnknown: true });
                 jobs.push(validated);
             }
