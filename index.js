@@ -6,35 +6,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-require('./src/routes/DocRouter');
-
-app.get("/swagger.json", (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
-});
-
-app.get("/api-docs", (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Swagger UI</title>
-        <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
-      </head>
-      <body>
-        <div id="swagger-ui"></div>
-        <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
-        <script>
-          const ui = SwaggerUIBundle({
-            url: '/swagger.json',
-            dom_id: '#swagger-ui',
-          });
-        </script>
-      </body>
-    </html>
-  `);
-});
-
 const ImageRouter = require('./src/routes/ImageRouter');
 app.use('/api/images', ImageRouter);
 
