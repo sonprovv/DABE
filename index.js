@@ -21,8 +21,7 @@ app.use('/api/services', ServiceRouter);
 const JobRouter = require('./src/routes/JobRouter');
 app.use('/api/jobs', JobRouter);
 
-// ❌ KHÔNG dùng app.listen trên Vercel
-// const PORT = process.env.PORT || 5000;
-// app.listen(PORT, () => console.log('Server running...'));
-
-module.exports = app; // ✅ export app cho @vercel/node
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log('Server running...')
+});
