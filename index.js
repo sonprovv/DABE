@@ -4,7 +4,7 @@ const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json());;
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -22,6 +22,9 @@ app.use('/api/services', ServiceRouter);
 
 const JobRouter = require('./src/routes/JobRouter');
 app.use('/api/jobs', JobRouter);
+
+const OrderRouter = require('./src/routes/OrderRouter');
+app.use('/api/orders', OrderRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

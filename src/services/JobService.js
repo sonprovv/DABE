@@ -1,5 +1,5 @@
 const { db } = require("../config/firebase");
-const { formatDate } = require("../utils/formatDate");
+const { formatDate, formatDateAndTime } = require("../utils/formatDate");
 const { CleaningJobGetvalid, HealthcareJobGetValid } = require("../utils/validator/JobValid");
 const AccountService = require("./AccountService");
 const ServiceService = require("./ServiceService");
@@ -53,35 +53,7 @@ class JobService {
 
             const jobs = [];
             for (const doc of snapshot.docs) {
-                const tmp = {
-                    uid: doc.id,
-                    serviceType: doc.data().serviceType,
-                    startTime: doc.data().startTime,
-                    workerQuantity: doc.data().workerQuantity,
-                    status: doc.data().status,
-                    price: doc.data().price,
-                    isWeek: doc.data().isWeek,
-                    dayOfWeek: doc.data().dayOfWeek,
-                    createdAt: formatDate(doc.data().createdAt.toDate()),
-                    isCooking: doc.data().isCooking,
-                    isIroning: doc.data().isIroning,
-                }
-                const account = await AccountService.getByUID(doc.data().userID);
-                const user = await UserService.getByUID(doc.data().userID);
-                const duration = await TimeService.getDurationByID(doc.data().durationID);
-                const services = [];
-                for (const serviceID of doc.data().services) {
-                    const serviceDoc = await ServiceService.getCleaningServiceByUID(serviceID);
-                    services.push(serviceDoc);
-                }
-                user['email'] = account.email;
-                user['role'] = account.role;
-                user['dob'] = formatDate(user.dob.toDate());
-                tmp['user'] = user;
-                tmp['duration'] = duration;
-                tmp['services'] = services;
-                const validated = await CleaningJobGetvalid.validateAsync(tmp, { stripUnknown: true });
-                jobs.push(validated);
+                jobs.push(await this.getJob(doc.id, doc.data()));
             }
 
             return jobs;
@@ -97,42 +69,7 @@ class JobService {
 
             const jobs = [];
             for (const doc of snapshot.docs) {
-                const tmp = {
-                    uid: doc.id,
-                    serviceType: doc.data().serviceType,
-                    startTime: doc.data().startTime,
-                    workerQuantity: doc.data().workerQuantity,
-                    status: doc.data().status,
-                    price: doc.data().price,
-                    isWeek: doc.data().isWeek,
-                    dayOfWeek: doc.data().dayOfWeek,
-                    createdAt: formatDate(doc.data().createdAt.toDate()),
-                }
-                const account = await AccountService.getByUID(doc.data().userID);
-                const user = await UserService.getByUID(doc.data().userID);
-                const shift = await TimeService.getShiftByID(doc.data().shiftID);
-                const serviceIDs = doc.data().services;
-
-                const details = await this.getHealthcareDetails(serviceIDs);
-
-                const services = [];
-                for (const service of details) {
-                    const serviceDoc = await ServiceService.getHealthcareServiceByUID(service.healthcareServiceID);
-                    services.push({
-                        healthcareService: serviceDoc,
-                        quantity: service.quantity
-                    })
-                }
-                console.log(services)
-                user['email'] = account.email;
-                user['role'] = account.role;
-                user['dob'] = formatDate(user.dob.toDate());
-                tmp['user'] = user;
-                tmp['shift'] = shift;
-                tmp['services'] = services;
-                // console.log(tmp)
-                const validated = await HealthcareJobGetValid.validateAsync(tmp, { stripUnknown: true });
-                jobs.push(validated);
+                jobs.push(await this.getJob(doc.id, doc.data()));
             }
 
             return jobs;
@@ -159,6 +96,99 @@ class JobService {
             console.log(err.message);
             throw new Error("Không thành công")
         }
+    }
+
+    async getByUID(uid, serviceType) {
+        try {
+            if (serviceType==='CLEANING') {
+                const jobDoc = await db.collection('cleaningJobs').doc(uid).get();
+
+                return await this.getJob(uid, jobDoc.data());
+            }
+            else if (serviceType==='HEALTHCARE') {
+                const jobDoc = await db.collection('healthcareJobs').doc(uid).get();
+
+                return await this.getJob(uid, jobDoc.data());
+            }
+            throw new Error("Danh mục không tồn tại")
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không thành công")
+        }
+    }
+
+    async getJobsByUserID(userID) {
+        try {
+            const snapshotCleaning = await db.collection('cleaningJobs').where('userID', '==', userID).get();
+            const snapshotHeaalthcare = await db.collection('healthcareJobs').where('userID', '==', userID).get();
+            const jobs = [];
+
+            for (const doc of snapshotCleaning.docs) {
+                jobs.push(await this.getJob(doc.id, doc.data()));
+            }
+
+            for (const doc of snapshotHeaalthcare.docs) {
+                jobs.push(await this.getJob(doc.id, doc.data()));
+            }
+
+            return jobs;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không tìm thấy")
+        }
+    }
+
+    async getJob(uid, data) {
+        const accountDoc = await AccountService.getByUID(data.userID);
+        const userDoc = await UserService.getByUID(data.userID);
+
+        const user = {
+            uid: data.userID,
+            ...userDoc,
+            email: accountDoc.email,
+            role: accountDoc.role
+        };
+        user['dob'] = formatDate(user.dob.toDate());
+        delete data['userID'];
+        data['uid'] = uid;
+        data['user'] = user;
+        data['startTime'] = formatDateAndTime(data.startTime.toDate());
+        data['endTime'] = formatDateAndTime(data.endTime.toDate());
+        data['createdAt'] = formatDate(data.createdAt.toDate());
+
+        if (data.serviceType==='CLEANING') {
+            const duration = await TimeService.getDurationByID(data.durationID);
+            const services = [];
+            for (const serviceID of data.services) {
+                const serviceDoc = await ServiceService.getCleaningServiceByUID(serviceID);
+                services.push(serviceDoc);
+            }
+            data['duration'] = duration;
+            data['services'] = services;
+            const validated = await CleaningJobGetvalid.validateAsync(data, { stripUnknown: true });
+            return validated;
+        }
+        else if (data.serviceType==='HEALTHCARE') {
+            const shift = await TimeService.getShiftByID(data.shiftID);
+            const serviceIDs = data.services;
+
+            const details = await this.getHealthcareDetails(serviceIDs);
+
+            const services = [];
+            for (const service of details) {
+                const serviceDoc = await ServiceService.getHealthcareServiceByUID(service.healthcareServiceID);
+                services.push({
+                    healthcareService: serviceDoc,
+                    quantity: service.quantity
+                })
+            } 
+            data['shift'] = shift;
+            data['services'] = services;
+            const validated = await HealthcareJobGetValid.validateAsync(data, { stripUnknown: true });
+            return validated;
+        }
+
+        throw new Error('Lôĩ');
     }
 }
 

@@ -1,0 +1,21 @@
+const Joi = require('joi');
+
+const OrderCreateValid = Joi.object({
+    worker: Joi.object({
+        uid: Joi.string().required(),
+        username: Joi.string().required(),
+        gender: Joi.string().required(),
+        dob: Joi.string().required(),
+        avatar: Joi.string().required(),
+        email: Joi.string().email().required(),
+        tel: Joi.string().required(),
+        location: Joi.string().required(),
+        role: Joi.string().valid('worker').required(),
+        description: Joi.string().required()
+    }).required(),
+    jobID: Joi.string().required(),
+    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE').required(),
+    status: Joi.string().default('Waiting')
+})
+
+module.exports = { OrderCreateValid };

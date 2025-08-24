@@ -52,7 +52,7 @@ class TimeService {
                 throw new Error("Không tìm thấy thông tin");
             }
 
-            return { uid, ...durationDoc.data() };
+            return { uid: uid, ...durationDoc.data() };
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");

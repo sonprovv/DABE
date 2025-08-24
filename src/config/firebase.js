@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const serviceAccount = JSON.parse(process.env.FB);
+// const serviceAccount = require('./jobs-4c9e3-firebase-adminsdk-fbsvc-babe46a315.json');
 
 if (!admin.apps.length) {
     admin.initializeApp({
@@ -12,5 +13,6 @@ if (!admin.apps.length) {
 
 const auth = admin.auth();
 const db = admin.firestore();
+const Timestamp = admin.firestore.Timestamp;
 
-module.exports = { db, auth, admin };
+module.exports = { db, auth, admin, Timestamp };

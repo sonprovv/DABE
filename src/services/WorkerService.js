@@ -11,7 +11,7 @@ class WorkerService {
                 throw new Error("Người dùng không tồn tại")
             }
 
-            return { uid, ...workerDoc.data() };
+            return { uid: uid, ...workerDoc.data() };
         } catch (err) {
             console.error(err.message);
             throw new Error("Không tìm thấy thông tin")
@@ -38,7 +38,7 @@ class WorkerService {
 
             const updatedUser = await userRef.get();
 
-            return {uid, ...updatedUser.data()};
+            return { uid: uid, ...updatedUser.data() };
         } catch (err) {
             console.error(err.message);
             throw new Error("Cập nhật không thành công")

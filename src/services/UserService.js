@@ -11,7 +11,7 @@ class UserService {
                 throw new Error("Người dùng không tồn tại")
             }
 
-            return { uid, ...userDoc.data() };
+            return { uid: uid, ...userDoc.data() };
         } catch (err) {
             console.error(err.message);
             throw new Error("Không tìm thấy thông tin")

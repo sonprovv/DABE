@@ -1,7 +1,12 @@
+const dayjs = require('dayjs');
 const JobService = require("../services/JobService");
-const { formatDate } = require("../utils/formatDate");
+const { formatDate, getStartAndEndTime } = require("../utils/formatDate");
 const { failResponse, successDataResponse } = require("../utils/response");
 const { CleaningJobCreateValid, HealthcareJobCreateValid } = require("../utils/validator/JobValid");
+const customParseFormat = require("dayjs/plugin/customParseFormat");
+const { Timestamp } = require('../config/firebase');
+
+dayjs.extend(customParseFormat);
 
 const createJob = async (req, res) => {
     try {
@@ -11,6 +16,12 @@ const createJob = async (req, res) => {
         if (serviceType.toUpperCase()==="CLEANING") {
             const validated = await CleaningJobCreateValid.validateAsync(rawData, { stripUnknown: true });
             
+            const { startTime, endTime } = getStartAndEndTime(
+                validated.startTime,
+                validated.dayOfWeek,
+                validated.duration.workingHour
+            );
+
             const serviceIDs = [];
             for (const service of validated.services) {
                 serviceIDs.push(service.uid)
@@ -18,13 +29,14 @@ const createJob = async (req, res) => {
             const newJob = {
                 userID: validated.user.uid,
                 serviceType: serviceType.toUpperCase(),
-                startTime: validated.startTime,
+                startTime: Timestamp.fromDate(dayjs(startTime, 'HH:mm DD/MM/YYYY').toDate()),
+                endTime: Timestamp.fromDate(dayjs(endTime, 'HH:mm DD/MM/YYYY').toDate()),
                 workerQuantity: validated.workerQuantity,
-                status: validated.status,
                 price: validated.price,
                 isWeek: validated.isWeek,
                 dayOfWeek: validated.dayOfWeek,
                 createdAt: new Date(),
+                status: validated.status,
                 durationID: validated.duration.uid,
                 // option: 
                 services: serviceIDs,
@@ -32,7 +44,10 @@ const createJob = async (req, res) => {
                 isIroning: validated.isIroning,
             }
             const uidNewJob = await JobService.createCleaningJob(newJob);
+            console.log('knj')
             validated['uid'] = uidNewJob;
+            validated['startTime'] = startTime;
+            validated['endTime'] = endTime;
             validated['createdAt'] = formatDate(newJob.createdAt);
 
             return successDataResponse(res, 200, validated, 'newJob');
@@ -40,6 +55,12 @@ const createJob = async (req, res) => {
         else if (serviceType.toUpperCase()==="HEALTHCARE") {
             const validated = await HealthcareJobCreateValid.validateAsync(rawData, { stripUnknown: true });
             const newHealthcareDetails = [];
+
+             const { startTime, endTime } = getStartAndEndTime(
+                validated.startTime,
+                validated.dayOfWeek,
+                validated.shift.workingHour
+            );
 
             for (const healthcareDetails of validated.services) {
                 newHealthcareDetails.push({
@@ -53,19 +74,22 @@ const createJob = async (req, res) => {
             const newJob = {
                 userID: validated.user.uid,
                 serviceType: serviceType.toUpperCase(),
-                startTime: validated.startTime,
+                startTime: Timestamp.fromDate(dayjs(startTime, 'HH:mm DD/MM/YYYY').toDate()),
+                endTime: Timestamp.fromDate(dayjs(endTime, 'HH:mm DD/MM/YYYY').toDate()),
                 workerQuantity: validated.workerQuantity,
-                status: validated.status,
                 price: validated.price,
                 isWeek: validated.isWeek,
                 dayOfWeek: validated.dayOfWeek,
                 createdAt: new Date(), 
+                status: validated.status,
                 shiftID: validated.shift.uid,
                 services: healthcareDetailIDs
             }
 
             const uidNewJob = await JobService.createHealthcareJob(newJob);
             validated['uid'] = uidNewJob;
+            validated['startTime'] = startTime;
+            validated['endTime'] = endTime;
             validated['createdAt'] = formatDate(newJob.createdAt);
 
             return successDataResponse(res, 200, validated, 'newJob');
@@ -94,7 +118,21 @@ const getJobsByServiceType = async (req, res) => {
     }
 }
 
+const getJobsByUserID = async (req, res) => {
+    try {
+        const { userID } = req.params;
+
+        const jobs = await JobService.getJobsByUserID(userID);
+
+        successDataResponse(res, 200, jobs, 'jobs');
+    } catch (err) {
+        console.log(err.message);
+        failResponse(res, 400, err.message);
+    }
+}
+
 module.exports = {
     createJob,
-    getJobsByServiceType
+    getJobsByServiceType,
+    getJobsByUserID
 }

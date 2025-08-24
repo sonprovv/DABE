@@ -13,7 +13,7 @@ class ServiceService {
                 throw new Error("Không tìm thấy thông tin");
             }
 
-            return { uid, ...serviceDoc.data() };
+            return { uid: uid, ...serviceDoc.data() };
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");
@@ -28,7 +28,7 @@ class ServiceService {
                 throw new Error("Không tìm thấy thông tin");
             }
 
-            return { uid, ...healthcareDoc.data() };
+            return { uid: uid, ...healthcareDoc.data() };
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");
