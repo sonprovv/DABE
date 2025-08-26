@@ -8,10 +8,24 @@ const { failResponse, successDataResponse, successResponse } = require("../utils
 const { UserValid, WorkerValid, UserInfoValid, WorkerInfoValid } = require("../utils/validator/UserValid");
 const { ForgotPasswordValid } = require("../utils/validator/AuthValid");
 const { auth } = require("../config/firebase");
+const { default: axios } = require("axios");
+const dotenv = require('dotenv');
+dotenv.config();
 
 const getMe = async (req, res) => {
     try {
-        const uid = req.user.uid;
+        // const uid = req.user.uid;
+
+        const { email, password } = req.body;
+        const response = await axios.post(
+            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FB_API_KEY}`,
+            { email, password, returnSecureToken: true }
+        );
+
+        const token = response.data.idToken;
+        const decoded = await auth.verifyIdToken(token);
+
+        const uid = decoded.uid;
 
         const account = await AccountService.getByUID(uid);
         let currentUser;
@@ -45,7 +59,10 @@ const getMe = async (req, res) => {
             )
         }
 
-        return successDataResponse(res, 200, currentUser.getInfo(), 'user')
+        return successDataResponse(res, 200, {
+            user: currentUser.getInfo(),
+            token: token
+        })
     } catch (err) {
         console.log(err.message);
         return failResponse(res, 400, "Không tìm thấy thông tin người dùng")
