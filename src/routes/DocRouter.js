@@ -75,8 +75,6 @@
  *  post:
  *      summary: Tạo người dùng mới dùng khi đăng ký
  *      tags: [User]
- *      sercurity:
- *          - bearerAuth: []
  *      requestBody:
  *          required: true
  *          content:
@@ -84,8 +82,26 @@
  *                  schema:
  *                      type: object
  *                      required: 
+ *                          - email
+ *                          - password
+ *                          - username
+ *                          - avatar
  *                          - role
  *                      properties:
+ *                          email:
+ *                              type: string
+ *                              example: test@gmail.com
+ *                          password:
+ *                              type: string
+ *                              example: 411411
+ *                          username:
+ *                              type: string
+ *                              nullable: true
+ *                              example: null
+ *                          avatar:
+ *                              type: string
+ *                              nullable: true
+ *                              example: null
  *                          role:
  *                              type: string
  *                              example: user
