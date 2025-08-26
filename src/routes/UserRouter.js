@@ -4,7 +4,7 @@ const { verifyToken } = require('../middleware/verifyToken');
 const { checkPermission } = require('../middleware/checkPermission');
 const { getMe, createUser, forgotPassword, changePassword, updateUser, deleteUser } = require('../controllers/UserController');
 
-router.get('/me', verifyToken, getMe);
+router.post('/me', getMe);
 
 router.post('/create', verifyToken, createUser);
 
