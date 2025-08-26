@@ -26,7 +26,11 @@ app.use('/api/jobs', JobRouter);
 const OrderRouter = require('./src/routes/OrderRouter');
 app.use('/api/orders', OrderRouter);
 
+const DocRouter = require('./src/routes/DocRouter');
+app.use('/api/docs', DocRouter);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log('Server running...')
+    console.log(`Server running on port ${PORT}...`);
+    console.log(`API documentation available at http://localhost:${PORT}/api-docs`);
 });
