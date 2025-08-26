@@ -43,11 +43,20 @@
 /**
  * @swagger
  * /api/users/me:
- *   get:
+ *   post:
  *      summary: Lấy thông tin người dùng sau khi đăng nhập
  *      tags: [User]
- *      security:
- *          - bearerAuth: []
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      email:
+ *                          type: string
+ *                          example: kain411thien@gmail.com
+ *                      password:
+ *                          type: string
+ *                          example: 411411
  *      responses:
  *          200:
  *              description: Thành công
@@ -274,7 +283,7 @@
 
 /**
  * @swagger
- * /api/jobs/cleaning:
+ * /api/jobs/type/cleaning:
  *  post:
  *      summary: Tạo công việc mới
  *      tags: [Job]
@@ -340,7 +349,7 @@
 
 /**
  * @swagger
- * /api/jobs/healthcare:
+ * /api/jobs/type/healthcare:
  *  post:
  *      summary: Tạo công việc mới
  *      tags: [Job]
