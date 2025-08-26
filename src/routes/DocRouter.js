@@ -51,12 +51,17 @@
  *          content:
  *              application/json:
  *                  schema:
- *                      email:
- *                          type: string
- *                          example: kain411thien@gmail.com
- *                      password:
- *                          type: string
- *                          example: 411411
+ *                      type: object
+ *                      required:
+ *                          - email
+ *                          - password
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                              example: kain411thien@gmail.com
+ *                          password:
+ *                              type: string
+ *                              example: 411411
  *      responses:
  *          200:
  *              description: Thành công
