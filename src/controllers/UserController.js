@@ -71,19 +71,30 @@ const getMe = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
-        const role = req.body.role;
+        const { email, password, username, avatar, role } = req.body;
+
+        const authAccount = await auth.createUser({
+            email,
+            password
+        })
+
+        const response = await axios.post(
+            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FB_API_KEY}`,
+            { email, password, returnSecureToken: true }
+        );
+
+        const token = response.data.idToken;
 
         const newAccount = new AccountModel(
-            req.user.uid,
-            req.user.email,
+            authAccount.uid,
+            authAccount.email,
             role
         );
 
         const rawUser = {
-            uid: req.user.uid,
-            // username: req.user.name,
-            // avatar: req.user.picture,
-            username: req.user.email.split('@')[0]
+            uid: authAccount.uid,
+            avatar: avatar ? avatar : 'https://res.cloudinary.com/dvofgx21o/image/upload/v1754337546/jobs/byhangkho4twacw1owri.png',
+            username: username ? username : authAccount.email.split('@')[0]
         }
         
         const account = await AccountService.createAccount(newAccount);
@@ -120,7 +131,10 @@ const createUser = async (req, res) => {
             )
         }
 
-        return successDataResponse(res, 200, newUser, 'user')
+        return successDataResponse(res, 200, {
+            user: newUser,
+            token: token
+        })
 
     } catch (err) {
         console.log(err);

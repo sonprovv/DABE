@@ -6,7 +6,7 @@ const { getMe, createUser, forgotPassword, changePassword, updateUser, deleteUse
 
 router.post('/me', getMe);
 
-router.post('/create', verifyToken, createUser);
+router.post('/create', createUser);
 
 router.put('/forgot-password', forgotPassword);
 

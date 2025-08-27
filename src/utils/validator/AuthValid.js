@@ -18,7 +18,13 @@ const ChangePasswordValid = Joi.object({
             'any.only': 'Mật khẩu không khớp',
             'string.empty': 'Xác nhận mật khẩu không để trống'
         }),
+})
 
+const ForgotPasswordValid = ChangePasswordValid.keys({
+    email: Joi.string().email().required().messages({
+        'string.empty': 'Email không được để trống',
+        'string.email': 'Không đúng định dạng email'
+    }),
     code: Joi.string().length(6).required().messages({
         'string.length': 'Lỗi mã xác thực vui lòng thử lại',
         'string.empty': 'Lỗi mã xác thực vui lòng thử lại'
@@ -27,13 +33,6 @@ const ChangePasswordValid = Joi.object({
         'any.only': 'Mã xác nhận không trùng khớp',
         'string.length': 'Mã xác nhận phải đúng 6 ký tự',
         'string.empty': 'Mã xác thực không được để trống'
-    }),
-})
-
-const ForgotPasswordValid = ChangePasswordValid.keys({
-    email: Joi.string().email().required().messages({
-        'string.empty': 'Email không được để trống',
-        'string.email': 'Không đúng định dạng email'
     }),
 })
 
