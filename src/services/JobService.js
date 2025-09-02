@@ -49,12 +49,12 @@ class JobService {
 
     async getByUID(uid, serviceType) {
         try {
-            if (serviceType==='CLEANING') {
+            if (serviceType.toUpperCase()==='CLEANING') {
                 const jobDoc = await db.collection('cleaningJobs').doc(uid).get();
 
                 return await this.getJob(uid, jobDoc.data());
             }
-            else if (serviceType==='HEALTHCARE') {
+            else if (serviceType.toUpperCase()==='HEALTHCARE') {
                 const jobDoc = await db.collection('healthcareJobs').doc(uid).get();
 
                 return await this.getJob(uid, jobDoc.data());

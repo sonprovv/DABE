@@ -4,9 +4,9 @@ const { verifyToken } = require('../middleware/verifyToken');
 const { checkPermission } = require('../middleware/checkPermission');
 const { loginWithGG, getMe, createUser, forgotPassword, changePassword, updateUser, deleteUser } = require('../controllers/UserController');
 
-router.post('/google', loginWithGG);
-
 router.post('/me', getMe);
+
+router.post('/loginGG', loginWithGG);
 
 router.post('/create', createUser);
 

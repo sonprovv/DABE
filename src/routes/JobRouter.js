@@ -11,6 +11,6 @@ router.get('/:serviceType/:jobID', getByUID);
 
 router.get('/user/:userID', verifyToken, checkPermission(['user']), getJobsByUserID);
 
-router.get('/type/:serviceType', getJobsByServiceType);
+router.get('/:serviceType', getJobsByServiceType);
 
 module.exports = router;

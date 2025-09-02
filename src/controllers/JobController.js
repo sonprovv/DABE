@@ -138,7 +138,7 @@ const getJobsByServiceType = async (req, res) => {
     try {
         const { serviceType } = req.params;
 
-        if (serviceType.toUpperCase()==="CLEANING") {
+        if (serviceType.toUpperCase()==='CLEANING') {
             const jobs = await JobService.getCleaningJobs(); 
             return successDataResponse(res, 200, jobs, 'jobs');
         }
