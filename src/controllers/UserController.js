@@ -123,7 +123,7 @@ const loginWithGG = async (req, res) => {
 
         let currentUser;
         if (userDoc.exists) {
-            currentUser = { uid: currentUser.id, ...userDoc.data() };
+            currentUser = { uid: userDoc.id, ...userDoc.data() };
         } else {
             const rawUser = {
                 uid: uid,
