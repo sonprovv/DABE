@@ -4,7 +4,6 @@ const AccountModel = require("../models/AccountModel");
 const UserService = require("../services/UserService");
 const AccountService = require("../services/AccountService");
 const WorkerService = require("../services/WorkerService");
-const { formatDate } = require("../utils/formatDate");
 const { failResponse, successDataResponse, successResponse } = require("../utils/response");
 const { UserInfoValid, WorkerInfoValid, UserValid, WorkerValid } = require("../utils/validator/UserValid");
 const { ForgotPasswordValid } = require("../utils/validator/AuthValid");
@@ -120,12 +119,9 @@ const loginWithGG = async (req, res) => {
             currentAccount = newAccount;
         }
 
-        console.log("Current account: ", currentAccount);
-
         let currentUser;
         if (userDoc.exists) {
-            currentUser = { uid: userDoc.id, ...userDoc.data()};
-            currentUser['dob'] = formatDate(currentUser.dob)
+            currentUser = await getUser(currentAccount);
         } else {
             const rawUser = {
                 uid: uid,
@@ -145,8 +141,6 @@ const loginWithGG = async (req, res) => {
 
             currentUser = await getUser(currentAccount);
         }
-
-        console.log("Current user: ", currentUser);
 
         return successDataResponse(res, 200, {
             user: currentUser,
