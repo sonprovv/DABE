@@ -1,6 +1,6 @@
 const OrderService = require("../services/OrderService");
 const { failResponse, successResponse, successDataResponse } = require("../utils/response");
-const { OrderCreateValid } = require("../utils/validator/OrderValid");
+const { OrderCreateValid, OrderGetValid } = require("../utils/validator/OrderValid");
 
 const createOrder = async (req, res) => {
     try {
@@ -12,7 +12,7 @@ const createOrder = async (req, res) => {
         return successResponse(res, 200, 'Thành công')
     } catch (err) {
         console.log(err.message);
-        failResponse(res, 400, err.message)
+        return failResponse(res, 400, err.message)
     }
 }
 
@@ -22,10 +22,10 @@ const getOrdersByWorkerID = async (req, res) => {
 
         const orders = await OrderService.getOrdersByWorkerID(workerID);
 
-        successDataResponse(res, 200, orders, 'orders');
+        return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
         console.log(err.message);
-        failResponse(res, 400, err.message)
+        return failResponse(res, 400, err.message)
     }
 }
 
@@ -35,23 +35,24 @@ const getOrdersByJobID = async (req, res) => {
 
         const orders = await OrderService.getOrdersByJobID(jobID);
 
-        successDataResponse(res, 200, orders, 'orders');
+        return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
         console.log(err.message);
-        failResponse(res, 400, err.message)
+        return failResponse(res, 400, err.message)
     }
 }
 
 const putByUID = async (req, res) => {
     try {
-        const { orderID, status } = req.params;
+        const order = req.body;
+        const validated = await OrderGetValid.validateAsync(order, { stripUnknown: true });
 
-        const updatedOrder = await OrderService.putByUID(orderID, status);
+        const updatedOrder = await OrderService.putByUID(validated);
 
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
     } catch (err) {
         console.log(err.message);
-        failResponse(res, 400, err.message)
+        return failResponse(res, 400, err.message)
     }
 }
 

@@ -1,12 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-const { createJob, getJobsByServiceType, getJobsByUserID } = require("../controllers/JobController");
+const { createJob, getByUID, getJobsByUserID, getJobsByServiceType } = require("../controllers/JobController");
+const { verifyToken } = require('../middleware/verifyToken');
+const { checkPermission } = require('../middleware/checkPermission');
 
-router.post('/:serviceType', createJob);
+router.post('/:serviceType', verifyToken, checkPermission(['user']), createJob);
 
-router.get('/:serviceType', getJobsByServiceType);
+router.get('/:serviceType/:jobID', getByUID);
 
-router.get('/user/:userID', getJobsByUserID);
+router.get('/user/:userID', verifyToken, checkPermission(['user']), getJobsByUserID);
+
+router.get('/type/:serviceType', getJobsByServiceType);
 
 module.exports = router;

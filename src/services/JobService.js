@@ -47,6 +47,46 @@ class JobService {
         }
     }
 
+    async getByUID(uid, serviceType) {
+        try {
+            if (serviceType==='CLEANING') {
+                const jobDoc = await db.collection('cleaningJobs').doc(uid).get();
+
+                return await this.getJob(uid, jobDoc.data());
+            }
+            else if (serviceType==='HEALTHCARE') {
+                const jobDoc = await db.collection('healthcareJobs').doc(uid).get();
+
+                return await this.getJob(uid, jobDoc.data());
+            }
+            throw new Error("Danh mục không tồn tại")
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không thành công")
+        }
+    }
+
+    async getJobsByUserID(userID) {
+        try {
+            const snapshotCleaning = await db.collection('cleaningJobs').where('userID', '==', userID).get();
+            const snapshotHeaalthcare = await db.collection('healthcareJobs').where('userID', '==', userID).get();
+            const jobs = [];
+
+            for (const doc of snapshotCleaning.docs) {
+                jobs.push(await this.getJob(doc.id, doc.data()));
+            }
+
+            for (const doc of snapshotHeaalthcare.docs) {
+                jobs.push(await this.getJob(doc.id, doc.data()));
+            }
+
+            return jobs;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không tìm thấy")
+        }
+    }
+
     async getCleaningJobs() {
         try {
             const snapshot = await db.collection('cleaningJobs').get();
@@ -95,46 +135,6 @@ class JobService {
         } catch (err) {
             console.log(err.message);
             throw new Error("Không thành công")
-        }
-    }
-
-    async getByUID(uid, serviceType) {
-        try {
-            if (serviceType==='CLEANING') {
-                const jobDoc = await db.collection('cleaningJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            else if (serviceType==='HEALTHCARE') {
-                const jobDoc = await db.collection('healthcareJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            throw new Error("Danh mục không tồn tại")
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Không thành công")
-        }
-    }
-
-    async getJobsByUserID(userID) {
-        try {
-            const snapshotCleaning = await db.collection('cleaningJobs').where('userID', '==', userID).get();
-            const snapshotHeaalthcare = await db.collection('healthcareJobs').where('userID', '==', userID).get();
-            const jobs = [];
-
-            for (const doc of snapshotCleaning.docs) {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }
-
-            for (const doc of snapshotHeaalthcare.docs) {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }
-
-            return jobs;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Không tìm thấy")
         }
     }
 

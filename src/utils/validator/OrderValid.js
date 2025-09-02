@@ -14,8 +14,13 @@ const OrderCreateValid = Joi.object({
         description: Joi.string().required()
     }).required(),
     jobID: Joi.string().required(),
-    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE').required(),
-    status: Joi.string().default('Waiting')
+    isReview: Joi.boolean().default(false),
+    status: Joi.string().default('Waiting'),
+    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE').required()
 })
 
-module.exports = { OrderCreateValid };
+const OrderGetValid = OrderCreateValid.keys({
+    uid: Joi.string().required(),
+})
+
+module.exports = { OrderCreateValid, OrderGetValid };

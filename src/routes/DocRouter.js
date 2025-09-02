@@ -43,11 +43,25 @@
 /**
  * @swagger
  * /api/users/me:
- *   get:
+ *   post:
  *      summary: Lấy thông tin người dùng sau khi đăng nhập
  *      tags: [User]
- *      security:
- *          - bearerAuth: []
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - email
+ *                          - password
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                              example: kain411thien@gmail.com
+ *                          password:
+ *                              type: string
+ *                              example: 411411
  *      responses:
  *          200:
  *              description: Thành công
@@ -61,8 +75,6 @@
  *  post:
  *      summary: Tạo người dùng mới dùng khi đăng ký
  *      tags: [User]
- *      sercurity:
- *          - bearerAuth: []
  *      requestBody:
  *          required: true
  *          content:
@@ -70,8 +82,26 @@
  *                  schema:
  *                      type: object
  *                      required: 
+ *                          - email
+ *                          - password
+ *                          - username
+ *                          - avatar
  *                          - role
  *                      properties:
+ *                          email:
+ *                              type: string
+ *                              example: test@gmail.com
+ *                          password:
+ *                              type: string
+ *                              example: 411411
+ *                          username:
+ *                              type: string
+ *                              nullable: true
+ *                              example: null
+ *                          avatar:
+ *                              type: string
+ *                              nullable: true
+ *                              example: null
  *                          role:
  *                              type: string
  *                              example: user
@@ -274,7 +304,7 @@
 
 /**
  * @swagger
- * /api/jobs/cleaning:
+ * /api/jobs/type/cleaning:
  *  post:
  *      summary: Tạo công việc mới
  *      tags: [Job]
@@ -340,7 +370,7 @@
 
 /**
  * @swagger
- * /api/jobs/healthcare:
+ * /api/jobs/type/healthcare:
  *  post:
  *      summary: Tạo công việc mới
  *      tags: [Job]

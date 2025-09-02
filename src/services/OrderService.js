@@ -25,8 +25,11 @@ class OrderService {
                 const jobDoc = await JobService.getByUID(doc.data().jobID, doc.data().serviceType);
 
                 const tmp = {
+                    uid: doc.id,
+                    job: jobDoc,
+                    isReview: doc.data().isReview,
                     status: doc.data().status,
-                    job: jobDoc
+                    serviceType: doc.data().serviceType
                 }
                 orders.push(tmp);
             }
@@ -50,8 +53,11 @@ class OrderService {
                 workerDoc['role'] = accountDoc.role;
 
                 const tmp = {
+                    uid: doc.id,
+                    worker: workerDoc,
+                    isReview: doc.data().isReview,
                     status: doc.data().status,
-                    worker: workerDoc
+                    serviceType: doc.data().serviceType
                 }
                 orders.push(tmp);
             }
@@ -63,16 +69,21 @@ class OrderService {
         }
     }
 
-    async putByUID(uid, status) {
+    async putByUID(validated) {
+        const data = {
+            jobID: validated.jobID,
+            worker: validated.worker.uid,
+            isReview: validated.isReview,
+            status: validated.status,
+            serviceType: validated.serviceType
+        }
         try {
-            const orderRef = db.collection('orders').doc(uid);
-            orderRef.update({
-                status: status
-            })
+            const orderRef = db.collection('orders').doc(validated.uid);
+            orderRef.update(data)
 
             const updatedOrder = await orderRef.get();
 
-            return { uid: uid, ...updatedOrder};
+            return validated;
         } catch (err) {
             console.log(err.message);
             throw new Error("Thất bại")

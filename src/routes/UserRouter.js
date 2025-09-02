@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../middleware/verifyToken');
 const { checkPermission } = require('../middleware/checkPermission');
-const { getMe, createUser, forgotPassword, changePassword, updateUser, deleteUser } = require('../controllers/UserController');
+const { loginWithGG, getMe, createUser, forgotPassword, changePassword, updateUser, deleteUser } = require('../controllers/UserController');
 
-router.get('/me', verifyToken, getMe);
+router.post('/google', loginWithGG);
 
-router.post('/create', verifyToken, createUser);
+router.post('/me', getMe);
+
+router.post('/create', createUser);
 
 router.put('/forgot-password', forgotPassword);
 

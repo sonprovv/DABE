@@ -2,8 +2,8 @@ const admin = require('firebase-admin');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const serviceAccount = JSON.parse(process.env.FB);
-// const serviceAccount = require('./jobs-4c9e3-firebase-adminsdk-fbsvc-babe46a315.json');
+// const serviceAccount = JSON.parse(process.env.FB);
+const serviceAccount = require('./jobs-4c9e3-firebase-adminsdk-fbsvc-63b455713f.json');
 
 if (!admin.apps.length) {
     admin.initializeApp({
