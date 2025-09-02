@@ -56,8 +56,9 @@ io.on("connection", (socket) => {
     })
 })
 
-const { cleaningJobSchedule } = require('./src/notifications/JobNotifications');
+const { cleaningJobSchedule, healthcareJobSchedule } = require('./src/notifications/JobNotifications');
 cleaningJobSchedule(io, userSockets);
+healthcareJobSchedule(io, userSockets);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
