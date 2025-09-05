@@ -25,7 +25,10 @@ const options = {
       { bearerAuth: [], },
     ],
   },
-  apis: ["./src/routes/DocRouter.js"],
+  apis: [
+    "./src/routes/DocRouter.js",
+    "./src/docs/*.js"  // Bao gồm tất cả các file docs trong thư mục docs
+  ],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
