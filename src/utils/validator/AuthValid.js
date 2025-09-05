@@ -5,6 +5,10 @@ const AuthValid = Joi.object({
 })
 
 const ChangePasswordValid = Joi.object({
+    email: Joi.string().email().required().messages({
+        'string.empty': 'Email không được để trống',
+        'string.email': 'Không đúng định dạng email'
+    }),
     newPassword: Joi.string().min(6).max(10).required().messages({
         'string.empty': 'Mật khẩu không được để trống',
         'string.min': 'Mật khấu nhỏ hơn 6 ký tự',
@@ -21,10 +25,6 @@ const ChangePasswordValid = Joi.object({
 })
 
 const ForgotPasswordValid = ChangePasswordValid.keys({
-    email: Joi.string().email().required().messages({
-        'string.empty': 'Email không được để trống',
-        'string.email': 'Không đúng định dạng email'
-    }),
     code: Joi.string().length(6).required().messages({
         'string.length': 'Lỗi mã xác thực vui lòng thử lại',
         'string.empty': 'Lỗi mã xác thực vui lòng thử lại'
