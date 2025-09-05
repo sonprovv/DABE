@@ -12,20 +12,12 @@ const JobCreateValid = Joi.object({
         location: Joi.string().required(),
         role: Joi.string().valid('user').required()
     }).required(),
-    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE').required(),
     startTime: Joi.string().required(),
+    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE').required(),
     workerQuantity: Joi.number().default(1),
     isWeek: Joi.boolean().required(),
     price: Joi.number().required(),
-    dayOfWeek: Joi.array().items(Joi.string().valid(
-        'MONDAY',
-        'TUESDAY',
-        'WEDNESDAY',
-        'THURSDAY',
-        'FRIDAY',
-        'SATURDAY',
-        'SUNDAY'
-    )).min(1).required(),
+    listDays: Joi.array().items(Joi.string()).min(1).required(),
     status: Joi.string().default('Active'),
 })
 
@@ -72,13 +64,11 @@ const HealthcareJobCreateValid = JobCreateValid.keys({
 
 const CleaningJobGetvalid = CleaningJobCreateValid.keys({
     uid: Joi.string().required(),
-    endTime: Joi.string().required(),
     createdAt: Joi.string().required(),
 })
 
 const HealthcareJobGetValid = HealthcareJobCreateValid.keys({
     uid: Joi.string().required(),
-    endTime: Joi.string().required(),
     createdAt: Joi.string().required(),
 })
 

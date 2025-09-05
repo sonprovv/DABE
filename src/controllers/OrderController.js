@@ -2,6 +2,8 @@ const OrderService = require("../services/OrderService");
 const { failResponse, successResponse, successDataResponse } = require("../utils/response");
 const { OrderCreateValid, OrderGetValid } = require("../utils/validator/OrderValid");
 
+const userSockets = require('../notifications/userSockets');
+
 const createOrder = async (req, res) => {
     try {
         const rawData = req.body;
@@ -48,6 +50,25 @@ const putByUID = async (req, res) => {
         const validated = await OrderGetValid.validateAsync(order, { stripUnknown: true });
 
         const updatedOrder = await OrderService.putByUID(validated);
+
+        const socket = userSockets.get(updatedOrder.worker.uid);
+        if (socket && updatedOrder.status!=='Finished') {
+            const notify = {
+                jobID: updatedOrder.jobID,
+                title: 'Thông báo công việc',
+                content: '',
+                status: updatedOrder.status
+            }
+
+            if (updatedOrder.status==='Accepted') {
+                notify['content'] = 'Yêu cầu của bạn đã được chấp nhận';
+            }
+            else if (updatedOrder.status==='Rejected') {
+                notify['content'] = 'Yêu caauf công việc của bạn bị từ chối';
+            }       
+            console.log(notify)    
+            socket.emit('orderNotification', notify); 
+        }
 
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
     } catch (err) {

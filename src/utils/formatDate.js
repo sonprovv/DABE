@@ -53,11 +53,11 @@ const getDate = (hour, minute, duration) => {
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
 }
 
-const getStartAndEndTime = (startTime, dayOfWeek, time) => {
+const getStartAndEndTime = (startTime, listDays, time) => {
     const [hour, minute] = startTime.split(':').map(Number);
     
-    let start = dayOfWeek[0], end = dayOfWeek[0];
-    for (const date of dayOfWeek) {
+    let start = listDays[0], end = listDays[0];
+    for (const date of listDays) {
         if (DOW[date]<DOW[start]) start = date;
         if (DOW[date]>DOW[end]) end = date;
     }

@@ -152,8 +152,6 @@ class JobService {
         delete data['userID'];
         data['uid'] = uid;
         data['user'] = user;
-        data['startTime'] = formatDateAndTime(data.startTime.toDate());
-        data['endTime'] = formatDateAndTime(data.endTime.toDate());
         data['createdAt'] = formatDate(data.createdAt.toDate());
 
         if (data.serviceType==='CLEANING') {

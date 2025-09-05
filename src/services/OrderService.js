@@ -72,7 +72,7 @@ class OrderService {
     async putByUID(validated) {
         const data = {
             jobID: validated.jobID,
-            worker: validated.worker.uid,
+            workerID: validated.worker.uid,
             isReview: validated.isReview,
             status: validated.status,
             serviceType: validated.serviceType

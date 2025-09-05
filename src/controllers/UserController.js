@@ -6,7 +6,7 @@ const AccountService = require("../services/AccountService");
 const WorkerService = require("../services/WorkerService");
 const { failResponse, successDataResponse, successResponse } = require("../utils/response");
 const { UserInfoValid, WorkerInfoValid, UserValid, WorkerValid } = require("../utils/validator/UserValid");
-const { ForgotPasswordValid } = require("../utils/validator/AuthValid");
+const { ForgotPasswordValid, ChangePasswordValid } = require("../utils/validator/AuthValid");
 const { auth, db } = require("../config/firebase");
 const { default: axios } = require("axios");
 const dotenv = require('dotenv');
@@ -119,11 +119,9 @@ const loginWithGG = async (req, res) => {
             currentAccount = newAccount;
         }
 
-        console.log("Current account: ", currentAccount);
-
         let currentUser;
         if (userDoc.exists) {
-            currentUser = { uid: currentUser.id, ...userDoc.data() };
+            currentUser = await getUser(currentAccount);
         } else {
             const rawUser = {
                 uid: uid,
@@ -143,8 +141,6 @@ const loginWithGG = async (req, res) => {
 
             currentUser = await getUser(currentAccount);
         }
-
-        console.log("Current user: ", currentUser);
 
         return successDataResponse(res, 200, {
             user: currentUser,
@@ -230,7 +226,7 @@ const changePassword = async (req, res) => {
     try {
         const emailToken = req.user.email;
         const rawData = req.body;
-        const validated = await ForgotPasswordValid.validateAsync({email: emailToken, ...rawData}, { stripUnknown: true });
+        const validated = await ChangePasswordValid.validateAsync({email: emailToken, ...rawData}, { stripUnknown: true });
 
         const userRecord = await auth.getUserByEmail(validated.email);
         await auth.updateUser(userRecord.uid, {

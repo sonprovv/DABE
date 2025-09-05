@@ -16,12 +16,6 @@ const createJob = async (req, res) => {
 
         if (serviceType.toUpperCase()==="CLEANING") {
             const validated = await CleaningJobCreateValid.validateAsync(rawData, { stripUnknown: true });
-            
-            const { startTime, endTime } = getStartAndEndTime(
-                validated.startTime,
-                validated.dayOfWeek,
-                validated.duration.workingHour
-            );
 
             const serviceIDs = [];
             for (const service of validated.services) {
@@ -29,26 +23,21 @@ const createJob = async (req, res) => {
             }
             const newJob = {
                 userID: validated.user.uid,
+                startTime: validated.startTime,
                 serviceType: serviceType.toUpperCase(),
-                startTime: Timestamp.fromDate(dayjs(startTime, 'HH:mm DD/MM/YYYY').toDate()),
-                endTime: Timestamp.fromDate(dayjs(endTime, 'HH:mm DD/MM/YYYY').toDate()),
                 workerQuantity: validated.workerQuantity,
                 price: validated.price,
                 isWeek: validated.isWeek,
-                dayOfWeek: validated.dayOfWeek,
+                listDays: validated.listDays,
                 createdAt: new Date(),
                 status: validated.status,
                 durationID: validated.duration.uid,
-                // option: 
                 services: serviceIDs,
                 isCooking: validated.isCooking,
                 isIroning: validated.isIroning,
             }
             const uidNewJob = await JobService.createCleaningJob(newJob);
-            console.log('knj')
             validated['uid'] = uidNewJob;
-            validated['startTime'] = startTime;
-            validated['endTime'] = endTime;
             validated['createdAt'] = formatDate(newJob.createdAt);
             await redis.set(`/jobs/${serviceType}/${uidNewJob}`, validated);
             return successDataResponse(res, 200, validated, 'newJob');
@@ -56,12 +45,6 @@ const createJob = async (req, res) => {
         else if (serviceType.toUpperCase()==="HEALTHCARE") {
             const validated = await HealthcareJobCreateValid.validateAsync(rawData, { stripUnknown: true });
             const newHealthcareDetails = [];
-
-             const { startTime, endTime } = getStartAndEndTime(
-                validated.startTime,
-                validated.dayOfWeek,
-                validated.shift.workingHour
-            );
 
             for (const healthcareDetails of validated.services) {
                 newHealthcareDetails.push({
@@ -74,13 +57,12 @@ const createJob = async (req, res) => {
 
             const newJob = {
                 userID: validated.user.uid,
+                startTime: validated.startTime,
                 serviceType: serviceType.toUpperCase(),
-                startTime: Timestamp.fromDate(dayjs(startTime, 'HH:mm DD/MM/YYYY').toDate()),
-                endTime: Timestamp.fromDate(dayjs(endTime, 'HH:mm DD/MM/YYYY').toDate()),
                 workerQuantity: validated.workerQuantity,
                 price: validated.price,
                 isWeek: validated.isWeek,
-                dayOfWeek: validated.dayOfWeek,
+                listDays: validated.listDays,
                 createdAt: new Date(), 
                 status: validated.status,
                 shiftID: validated.shift.uid,
@@ -89,8 +71,6 @@ const createJob = async (req, res) => {
 
             const uidNewJob = await JobService.createHealthcareJob(newJob);
             validated['uid'] = uidNewJob;
-            validated['startTime'] = startTime;
-            validated['endTime'] = endTime;
             validated['createdAt'] = formatDate(newJob.createdAt);
             await redis.set(`/jobs/${serviceType}/${uidNewJob}`, validated);
             return successDataResponse(res, 200, validated, 'newJob');

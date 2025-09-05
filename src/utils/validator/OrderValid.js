@@ -21,6 +21,7 @@ const OrderCreateValid = Joi.object({
 
 const OrderGetValid = OrderCreateValid.keys({
     uid: Joi.string().required(),
+    status: Joi.string().valid('Accepted', 'Rejected', 'Finished')
 })
 
 module.exports = { OrderCreateValid, OrderGetValid };
