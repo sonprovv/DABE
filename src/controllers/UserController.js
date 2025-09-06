@@ -33,7 +33,8 @@ const getUser = async (account) => {
             user.tel,
             user.location,
             account.email,
-            account.role
+            account.role,
+            account.provider
         )
         return currentUser.getInfo();
     }
@@ -49,6 +50,7 @@ const getUser = async (account) => {
             user.location,
             account.email,
             account.role,
+            account.provider,
             user.description
         )
         return currentUser.getInfo();
@@ -251,11 +253,11 @@ const updateUser = async (req, res) => {
 
         let userData;
         if (req.body.role==='user') {
-            const validated = await UserInfoValid.validateAsync(rawData, { stripUnknown: true });
+            const validated = await UserValid.validateAsync(rawData, { stripUnknown: true });
             userData = await UserService.updateUser(validated);
         }
         else {
-            const validated = await WorkerInfoValid.validateAsync(rawData, { stripUnknown: true });
+            const validated = await WorkerValid.validateAsync(rawData, { stripUnknown: true });
             userData = await WorkerService.updateUser(validated);
         }
         userData["email"] = req.body.email;

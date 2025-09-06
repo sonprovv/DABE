@@ -1,5 +1,5 @@
 class UserModel {
-    constructor(uid, username, gender, dob, avatar, tel, location, email, role) {
+    constructor(uid, username, gender, dob, avatar, tel, location, email, role, provider) {
         this.uid = uid;
         this.username = username;
         this.gender = gender;
@@ -11,6 +11,7 @@ class UserModel {
         this.tel = tel;
         this.location = location;
         this.role = role;
+        this.provider = provider;
     }
 
     formatDate = (date) => {
@@ -32,7 +33,8 @@ class UserModel {
             email: this.email,
             tel: this.tel,
             location: this.location,
-            role: this.role
+            role: this.role,
+            provider: this.provider
         }
     }
 }

@@ -19,6 +19,7 @@ const JobCreateValid = Joi.object({
     price: Joi.number().required(),
     listDays: Joi.array().items(Joi.string()).min(1).required(),
     status: Joi.string().default('Active'),
+    location: Joi.string().required(),
 })
 
 const CleaningJobCreateValid = JobCreateValid.keys({

@@ -85,7 +85,13 @@ const cleaningJobSchedule = (io, userSockets) => {
 
         for (const job of snapshot.docs) {
 
-            const endTime = await getEndTime(job.data().startTime, job.data().durationID, job.data().serviceType);
+            let endTime;
+            try {
+                endTime = await getEndTime(job.data().startTime, job.data().durationID, job.data().serviceType);
+            } catch (errr) {
+                continue;
+            }
+
             const notify = {
                 jobID: job.id,
                 title: 'Thông báo công việc',
@@ -154,7 +160,13 @@ const healthcareJobSchedule = (io, userSockets) => {
 
         for (const job of snapshot.docs) {
 
-            const endTime = await getEndTime(job.data().startTime, job.data().durationID, job.data().serviceType);
+            let endTime;
+            try {
+                endTime = await getEndTime(job.data().startTime, job.data().durationID, job.data().serviceType);
+            } catch (errr) {
+                continue;
+            }
+            
             const notify = {
                 jobID: job.id,
                 title: 'Thông báo công việc',

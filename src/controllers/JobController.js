@@ -31,6 +31,7 @@ const createJob = async (req, res) => {
                 listDays: validated.listDays,
                 createdAt: new Date(),
                 status: validated.status,
+                location: validated.location,
                 durationID: validated.duration.uid,
                 services: serviceIDs,
                 isCooking: validated.isCooking,
@@ -65,6 +66,7 @@ const createJob = async (req, res) => {
                 listDays: validated.listDays,
                 createdAt: new Date(), 
                 status: validated.status,
+                location: validated.location,
                 shiftID: validated.shift.uid,
                 services: healthcareDetailIDs
             }
