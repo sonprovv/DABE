@@ -1,6 +1,6 @@
 const { db } = require("../config/firebase");
-const { CleaningServiceModel, HealthcareServiceModel } = require("../models/ServiceModel");
-const { CleaningServiceValid, HealthcareServiceValid } = require("../utils/validator/ServiceValid");
+const { CleaningServiceModel, HealthcareServiceModel, MaintenanceServiceModel } = require("../models/ServiceModel");
+const { CleaningServiceValid, HealthcareServiceValid, MaintenanceServiceValid } = require("../utils/validator/ServiceValid");
 
 class ServiceService {
     constructor() {}
@@ -43,12 +43,12 @@ class ServiceService {
             for (const doc of snapshot.docs) {
                 const serviceDoc = new CleaningServiceModel(
                     doc.id,
+                    doc.data().image,
                     doc.data().serviceType,
                     doc.data().serviceName,
-                    doc.data().image,
                     doc.data().tasks
                 );
-                const validated = await CleaningServiceValid.validateAsync(serviceDoc, { stripUnknown: true });
+                const validated = await CleaningServiceValid.validateAsync(serviceDoc.getInfo(), { stripUnknown: true });
                 services.push(validated);
             }
 
@@ -67,12 +67,39 @@ class ServiceService {
             for (const doc of snapshot.docs) {
                 const serviceDoc = new HealthcareServiceModel(
                     doc.id,
+                    doc.data().image,
                     doc.data().serviceType,
                     doc.data().serviceName,
                     doc.data().duties,
                     doc.data().excludedTasks
                 );
-                const validated = await HealthcareServiceValid.validateAsync(serviceDoc, { stripUnknown: true });
+                const validated = await HealthcareServiceValid.validateAsync(serviceDoc.getInfo(), { stripUnknown: true });
+                services.push(validated);
+            }
+
+            return services;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không tìm thấy thông tin");
+        }
+    }
+
+    async getMaintenanceService() {
+         try {
+            const snapshot = await db.collection('maintenanceServices').get();
+            const services = [];
+
+            for (const doc of snapshot.docs) {
+                const serviceDoc = new MaintenanceServiceModel(
+                    doc.id,
+                    doc.data().image,
+                    doc.data().serviceType,
+                    doc.data().serviceName,
+                    doc.data().powers,
+                    doc.data().isMaintenance,
+                    doc.data().maintenance
+                );
+                const validated = await MaintenanceServiceValid.validateAsync(serviceDoc.getInfo(), { stripUnknown: true });
                 services.push(validated);
             }
 

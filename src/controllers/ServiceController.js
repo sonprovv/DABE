@@ -37,9 +37,15 @@ const getByServiceTye = async (req, res) => {
             await redis.set(`/services/${serviceType.toLowerCase()}`, result);
             return successDataResponse(res, 200, result);
         }
+        else if (serviceType.toUpperCase()==="MAINTENANCE") {
+            const services = await ServiceService.getMaintenanceService();
+
+            await redis.set(`/services/${serviceType.toLowerCase()}`, services);
+            return successDataResponse(res, 200, services);
+        }
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message);
+        return failResponse(res, 500, err.message);
     }
 }
 

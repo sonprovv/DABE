@@ -22,6 +22,7 @@ const UserInfoValid = Joi.object({
     avatar: Joi.string().required(),
     tel: Joi.string().required(),
     location: Joi.string().required(),
+    
 })
 
 const WorkerInfoValid = UserInfoValid.keys({

@@ -79,7 +79,7 @@ const getMe = async (req, res) => {
         })
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, "Không tìm thấy thông tin người dùng")
+        return failResponse(res, 500, "Không tìm thấy thông tin người dùng")
     }
 }
 
@@ -99,7 +99,7 @@ const loginWithGG = async (req, res) => {
             
             const existingAccount = accountSnapshot.docs[0]?.data();
             if (existingAccount && existingAccount.provider !== 'google.com') {
-                return failResponse(res, 400, `Email này đã được đăng ký với ${existingAccount.provider}. Vui lòng đăng nhập bằng ${existingAccount.provider}`);
+                return failResponse(res, 500, `Email này đã được đăng ký với ${existingAccount.provider}. Vui lòng đăng nhập bằng ${existingAccount.provider}`);
             }
         }
 
@@ -150,7 +150,7 @@ const loginWithGG = async (req, res) => {
         })
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, "Không thành công")
+        return failResponse(res, 500, "Không thành công")
     }
 }
 
@@ -220,7 +220,7 @@ const forgotPassword = async (req, res) => {
         return successResponse(res, 200, "Mật khẩu đã được thay đổi")
 
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -238,7 +238,7 @@ const changePassword = async (req, res) => {
         return successResponse(res, 200, "Mật khẩu đã được thay đổi")
 
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -248,7 +248,7 @@ const updateUser = async (req, res) => {
 
         const allowedRoles = ['user', 'worker'];
         if (!allowedRoles.includes(req.body.role)) {
-            return failResponse(res, 400, "Role không hợp lệ");
+            return failResponse(res, 500, "Role không hợp lệ");
         }
 
         let userData;
@@ -264,7 +264,7 @@ const updateUser = async (req, res) => {
         userData["role"] = req.body.role;
         return successDataResponse(res, 200, userData, 'user')
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -274,7 +274,7 @@ const deleteUser = async (req, res) => {
 
         const allowedRoles = ['user', 'worker'];
         if (!allowedRoles.includes(req.body.role)) {
-            return failResponse(res, 400, "Role không hợp lệ");
+            return failResponse(res, 500, "Role không hợp lệ");
         }
 
         if (req.body.role==='user') {
@@ -287,7 +287,7 @@ const deleteUser = async (req, res) => {
         }
         return successResponse(res, 200, "Xóa người dùng thành công")
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 

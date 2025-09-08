@@ -14,7 +14,7 @@ const createOrder = async (req, res) => {
         return successResponse(res, 200, 'Thành công')
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -27,7 +27,7 @@ const getOrdersByWorkerID = async (req, res) => {
         return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -40,7 +40,7 @@ const getOrdersByJobID = async (req, res) => {
         return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -73,7 +73,7 @@ const putByUID = async (req, res) => {
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 

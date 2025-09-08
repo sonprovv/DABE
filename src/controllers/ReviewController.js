@@ -12,7 +12,7 @@ const createReview = async (req, res) => {
         return successResponse(res, 200, 'Thành công');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message);
+        return failResponse(res, 500, err.message);
     }
 }
 
@@ -25,7 +25,7 @@ const getExperienceOfWorker = async (req, res) => {
         return successDataResponse(res, 200, experiences, 'experiences');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message);
+        return failResponse(res, 500, err.message);
     }
 }
 
