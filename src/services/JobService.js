@@ -118,40 +118,32 @@ class JobService {
     }
 
     async getJobNew() {
-        try {
-            const now = new Date();
-            const dayPre10 = new Date(now.getTime() - 20 * 24 * 60 * 60 *1000);
+    try {
+        const now = new Date();
+        const dayPre10 = new Date(now.getTime() - 20 * 24 * 60 * 60 *1000);
 
-            const snapshotCleaning = await db.collection('cleaningJobs').where('createdAt', '>=', dayPre10).get();
-            const snapshotHealthcare = await db.collection('healthcareJobs').where('createdAt', '>=', dayPre10).get();
-            const snapshotMaintenance = await db.collection('maintenanceJobs').where('createdAt', '>=', dayPre10).get();
+        const [snapshotCleaning, snapshotHealthcare, snapshotMaintenance] = await Promise.all([
+            db.collection('cleaningJobs').where('createdAt', '>=', dayPre10).get(),
+            db.collection('healthcareJobs').where('createdAt', '>=', dayPre10).get(),
+            db.collection('maintenanceJobs').where('createdAt', '>=', dayPre10).get(),
+        ]);
 
-            const res = [];
-            for (const doc of snapshotCleaning.docs) res.push({ uid: doc.id, ...doc.data() });
-            for (const doc of snapshotHealthcare.docs) res.push({ uid: doc.id, ...doc.data() });
-            for (const doc of snapshotMaintenance.docs) res.push({ uid: doc.id, ...doc.data() });
+        const res = [
+            ...snapshotCleaning.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
+            ...snapshotHealthcare.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
+            ...snapshotMaintenance.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
+        ];
 
-            for (let i = 0; i < res.length; i++) {
-                for (let j = i+1; j < res.length; j++) {
-                    if (res[i].createdAt<res[j].createdAt) {
-                        const tmp = res[i];
-                        res[i] = res[j];
-                        res[j] = tmp;
-                    }
-                }
-            }
+        res.sort((a, b) => b.createdAt - a.createdAt);
 
-            for (let i = 0; i < res.length; i++) {
-                const job = await this.getJob(res[i].uid, res[i]);
-                res[i] = job;
-            }
+        const jobs = await Promise.all(res.map(job => this.getJob(job.uid, job)));
 
-            return res;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Không thành công")
-        }
+        return jobs;
+    } catch (err) {
+        console.log(err.message);
+        throw new Error("Không thành công");
     }
+}
 
     async getByUID(uid, serviceType) {
         try {
@@ -179,22 +171,23 @@ class JobService {
 
     async getJobsByUserID(userID) {
         try {
-            const snapshotCleaning = await db.collection('cleaningJobs').where('userID', '==', userID).get();
-            const snapshotHealthcare = await db.collection('healthcareJobs').where('userID', '==', userID).get();
-            const snapshotMaintenance = await db.collection('maintenanceJobs').where('userID', '==', userID).get();
+
+            const [snapshotCleaning, snapshotHealthcare, snapshotMaintenance] = await Promise.all([
+                await db.collection('cleaningJobs').where('userID', '==', userID).get(),
+                await db.collection('healthcareJobs').where('userID', '==', userID).get(),
+                await db.collection('maintenanceJobs').where('userID', '==', userID).get()
+            ]);
+
+            const allJobs = [
+                ...snapshotCleaning.docs.map((doc) => ({ uid: doc.id, data: doc.data() })),
+                ...snapshotHealthcare.docs.map((doc) => ({ uid: doc.id, data: doc.data() })),
+                ...snapshotMaintenance.docs.map((doc) => ({ uid: doc.id, data: doc.data() }))
+            ];
+
             const jobs = [];
-
-            for (const doc of snapshotCleaning.docs) {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }
-
-            for (const doc of snapshotHealthcare.docs) {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }
-
-            for (const doc of snapshotMaintenance.docs) {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }
+            await Promise.all(allJobs.map(async (job) => {
+                jobs.push(await this.getJob(job.uid, job.data));
+            }));
 
             return jobs;
         } catch (err) {
@@ -208,9 +201,10 @@ class JobService {
             const snapshot = await db.collection('cleaningJobs').get();
 
             const jobs = [];
-            for (const doc of snapshot.docs) {
+
+            await Promise.all(snapshot.docs.map(async (doc) => {
                 jobs.push(await this.getJob(doc.id, doc.data()));
-            }
+            }));
 
             return jobs;
         } catch (err) {
@@ -224,9 +218,10 @@ class JobService {
             const snapshot = await db.collection('healthcareJobs').get();
 
             const jobs = [];
-            for (const doc of snapshot.docs) {
+
+            await Promise.all(snapshot.docs.map(async (doc) => {
                 jobs.push(await this.getJob(doc.id, doc.data()));
-            }
+            }));
 
             return jobs;
         } catch (err) {
@@ -257,9 +252,10 @@ class JobService {
             const snapshot = await db.collection('maintenanceJobs').get();
 
             const jobs = [];
-            for (const doc of snapshot.docs) {
+
+            await Promise.all(snapshot.docs.map(async (doc) => {
                 jobs.push(await this.getJob(doc.id, doc.data()));
-            }
+            }));
 
             return jobs;
         } catch (err) {
@@ -334,7 +330,6 @@ class JobService {
             }
 
             data['services'] = services;
-            console.log(data)
             const validated = await MaintenanceJobGetValid.validateAsync(data, { stripUnknown: true });
             return validated;
         }

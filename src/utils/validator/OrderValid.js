@@ -1,6 +1,16 @@
 const Joi = require('joi');
 
 const OrderCreateValid = Joi.object({
+    workerID: Joi.string().required(),
+    jobID: Joi.string().required(),
+    isReview: Joi.boolean().default(false),
+    status: Joi.string().default('Waiting'),
+    createdAt: Joi.string().required(),
+    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required()
+})
+
+const OrderGetValid = Joi.object({
+    uid: Joi.string().required(),
     worker: Joi.object({
         uid: Joi.string().required(),
         username: Joi.string().required(),
@@ -15,13 +25,9 @@ const OrderCreateValid = Joi.object({
     }).required(),
     jobID: Joi.string().required(),
     isReview: Joi.boolean().default(false),
-    status: Joi.string().default('Waiting'),
-    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required()
-})
-
-const OrderGetValid = OrderCreateValid.keys({
-    uid: Joi.string().required(),
-    status: Joi.string().valid('Accepted', 'Rejected', 'Finished')
+    status: Joi.string().valid('Accepted', 'Rejected', 'Finished'),
+    createdAt: Joi.string().required(),
+    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required(),
 })
 
 module.exports = { OrderCreateValid, OrderGetValid };

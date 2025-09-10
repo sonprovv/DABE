@@ -21,7 +21,7 @@ class OrderService {
         try {
             const snapshot = await db.collection('orders').where('workerID', '==', workerID).get();
             const orders = [];
-            for (const doc of snapshot.docs) {
+            await Promise.all(snapshot.docs.map(async (doc) => {
                 const jobDoc = await JobService.getByUID(doc.data().jobID, doc.data().serviceType);
 
                 const tmp = {
@@ -29,10 +29,11 @@ class OrderService {
                     job: jobDoc,
                     isReview: doc.data().isReview,
                     status: doc.data().status,
+                    createdAt: doc.data().createdAt,
                     serviceType: doc.data().serviceType
                 }
                 orders.push(tmp);
-            }
+            }))
 
             return orders;
         } catch (err) {
@@ -45,7 +46,7 @@ class OrderService {
         try {
             const snapshot = await db.collection('orders').where('jobID', '==', jobID).get();
             const orders = [];
-            for (const doc of snapshot.docs) {
+            await Promise.all(snapshot.docs.map(async (doc) => {
                 const accountDoc = await AccountService.getByUID(doc.data().workerID);
                 const workerDoc = await WorkerService.getByUID(doc.data().workerID);
 
@@ -57,10 +58,11 @@ class OrderService {
                     worker: workerDoc,
                     isReview: doc.data().isReview,
                     status: doc.data().status,
+                    createdAt: doc.data().createdAt,
                     serviceType: doc.data().serviceType
                 }
                 orders.push(tmp);
-            }
+            }))
 
             return orders;
         } catch (err) {

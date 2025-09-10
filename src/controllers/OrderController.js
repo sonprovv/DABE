@@ -2,17 +2,16 @@ const OrderService = require("../services/OrderService");
 const { failResponse, successResponse, successDataResponse } = require("../utils/response");
 const { OrderCreateValid, OrderGetValid } = require("../utils/validator/OrderValid");
 
-const userSockets = require('../notifications/userSockets');
-const { formatDateAndTimeNow } = require("../utils/formatDate");
 const { orderStatus } = require("../notifications/OrderNotification");
+const { formatDateAndTimeNow } = require("../utils/formatDate");
 
 const createOrder = async (req, res) => {
     try {
         const rawData = req.body;
+        rawData['createdAt'] = formatDateAndTimeNow();
         const validated = await OrderCreateValid.validateAsync(rawData, { stripUnknown: true });
 
-        const { worker, ...data } = validated; 
-        await OrderService.createOrder({ workerID: worker.uid, ...data });
+        await OrderService.createOrder(validated);
         return successResponse(res, 200, 'Thành công')
     } catch (err) {
         console.log(err.message);
