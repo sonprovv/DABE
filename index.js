@@ -30,6 +30,9 @@ app.use('/api/jobs', JobRouter);
 const OrderRouter = require('./src/routes/OrderRouter');
 app.use('/api/orders', OrderRouter);
 
+const ScheduleRouter = require('./src/routes/ScheduleRouter');
+app.use('/api/schedules', ScheduleRouter);
+
 const ReviewRouter = require('./src/routes/ReviewRouter');
 app.use('/api/reviews', ReviewRouter);
 
@@ -38,33 +41,33 @@ const io = new Server(server, {
     cors: { origin: "*" }
 });
 
-io.on("connection", (socket) => {
-    console.log("Client connected: ", socket.id);
+// io.on("connection", (socket) => {
+//     console.log("Client connected: ", socket.id);
 
-    socket.on("register", (userID) => {
-        userSockets.set(userID, socket);
-        socket.emit('createSocket', {
-            message: 'Emit thành công'
-        })
-        console.log(`User ${userID} register with socket ${socket.id}`);
-    })
+//     socket.on("register", (userID) => {
+//         userSockets.set(userID, socket);
+//         socket.emit('createSocket', {
+//             message: 'Emit thành công'
+//         })
+//         console.log(`User ${userID} register with socket ${socket.id}`);
+//     })
 
-    socket.on("disconnect", () => {
-        for (let [userID, s] of userSockets.entries()) {
-            if (s.id === socket.id) {
-                userSockets.delete(userID);
-                console.log(`User ${userID} disconnected`);
-                break;
-            }
-        }
-    })
-})
+//     socket.on("disconnect", () => {
+//         for (let [userID, s] of userSockets.entries()) {
+//             if (s.id === socket.id) {
+//                 userSockets.delete(userID);
+//                 console.log(`User ${userID} disconnected`);
+//                 break;
+//             }
+//         }
+//     })
+// })
 
 const { cleaningJobSchedule, healthcareJobSchedule } = require('./src/notifications/JobNotifications');
-cleaningJobSchedule(io, userSockets);
-healthcareJobSchedule(io, userSockets);
+cleaningJobSchedule();
+healthcareJobSchedule();
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log('Server running...')
 });

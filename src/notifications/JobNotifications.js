@@ -1,5 +1,6 @@
-const { db } = require("../config/firebase");
+const { db, admin } = require("../config/firebase");
 const TimeService = require("../services/TimeService");
+const { formatDateAndTimeNow } = require("../utils/formatDate");
 
 let cleaningJobInterval = null, healthcareJobInterval = null;
 
@@ -50,26 +51,32 @@ const getEndTime = async (startTime, uid, serviceType) => {
     return `${hour.toString().padStart(2, '0')}:${minute}`;
 }
 
-const findWorkerAndNotify = async (userSockets, job, notify) => {
+const findWorkerAndNotify = async (job, notify) => {
     const snapshotOrder = await db.collection("orders").where('jobID', '==', job.id).get();
 
-    await Promise.all(snapshotOrder.docs.map(async (doc) => {
-        const socket = userSockets.get(doc.data().workerID);
+    await Promise.allSettled(snapshotOrder.docs.map(async (doc) => {
+        const workerID = doc.data().workerID;
 
-        console.log(doc.data().workerID);
+        const deviceDoc = await db.collection('devices').doc(workerID).get();
+        if (!deviceDoc.exists) return;
 
-        if (socket) {
-            socket.emit('jobNotification', notify);
-            await db.collection('notifications').add({
-                ...notify,
-                workerID: doc.data().workerID,
-                createdAt: new Date()
-            })
-        } 
+        const devices = deviceDoc.data().devices;
+        if (!devices || devices.length===0) return;
+
+        notify['clientID'] = workerID;
+        await admin.messaging().sendToDevice(devices, {
+            notification: {
+                title: notify.title,
+                body: notify.content
+            },
+            data: notify
+        })
+
+        await db.collection('notifications').add(notify);
     }))
 }
 
-const jobSchedule = (serviceType, collectionName, intervalRef, userSockets) => {
+const jobSchedule = (serviceType, collectionName, intervalRef) => {
     if (intervalRef.value) return;
 
     intervalRef.value = setInterval(async () => {
@@ -97,7 +104,8 @@ const jobSchedule = (serviceType, collectionName, intervalRef, userSockets) => {
                 title: 'Thông báo công việc',
                 content: '',
                 time: null,
-                serviceType: serviceType
+                serviceType: serviceType,
+                createdAt: formatDateAndTimeNow()
             }
 
             if (job.data().startTime===time30) {
@@ -112,7 +120,7 @@ const jobSchedule = (serviceType, collectionName, intervalRef, userSockets) => {
                 if (check) {
                     notify['content'] = 'Công việc sẽ bắt đầu sau 30 phút.\n Vui lòng sắp xếp di chuyển để thực hiện công việc.';
                     notify['time'] = job.data().startTime;
-                    await findWorkerAndNotify(userSockets, job, notify);
+                    await findWorkerAndNotify(job, notify);
                 }
             }
             else if (job.data().startTime===time) {
@@ -126,7 +134,7 @@ const jobSchedule = (serviceType, collectionName, intervalRef, userSockets) => {
                 if (check) {
                     notify['content'] = 'Công việc đã bắt đầu.';
                     notify['time'] = job.data().startTime;
-                    await findWorkerAndNotify(userSockets, job, notify);
+                    await findWorkerAndNotify(job, notify);
                 }
             }
             else if (endTime===time) {
@@ -141,14 +149,14 @@ const jobSchedule = (serviceType, collectionName, intervalRef, userSockets) => {
                 if (check) {
                     notify['content'] = 'Công việc đã kết thúc';
                     notify['time'] = endTime;
-                    await findWorkerAndNotify(userSockets, job, notify);
+                    await findWorkerAndNotify(job, notify);
                 }
             }
         }
     }, 60000);
 }
 
-const cleaningJobSchedule = (io, userSockets) => jobSchedule('CLEANING', 'cleaningJobs', { value: cleaningJobInterval }, userSockets);
-const healthcareJobSchedule = (io, userSockets) => jobSchedule('HEALTHCARE', 'healthcareJobs', { value: healthcareJobInterval }, userSockets);
+const cleaningJobSchedule = () => jobSchedule('CLEANING', 'cleaningJobs', { value: cleaningJobInterval });
+const healthcareJobSchedule = () => jobSchedule('HEALTHCARE', 'healthcareJobs', { value: healthcareJobInterval });
 
 module.exports = { cleaningJobSchedule, healthcareJobSchedule };
