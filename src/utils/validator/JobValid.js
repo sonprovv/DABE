@@ -1,28 +1,17 @@
 const Joi = require('joi');
 
-const JobCreateValid = Joi.object({
-    user: Joi.object({
-        uid: Joi.string().required(),
-        username: Joi.string().required(),
-        gender: Joi.string().required(),
-        dob: Joi.string().required(),
-        avatar: Joi.string().required(),
-        email: Joi.string().email().required(),
-        tel: Joi.string().required(),
-        location: Joi.string().required(),
-        role: Joi.string().valid('user').required()
-    }).required(),
+const JobValid = Joi.object({
     startTime: Joi.string().required(),
     serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required(),
     workerQuantity: Joi.number().default(1),
-    isWeek: Joi.boolean().required(),
     price: Joi.number().required(),
     listDays: Joi.array().items(Joi.string()).min(1).required(),
     status: Joi.string().default('Active'),
     location: Joi.string().required(),
 })
 
-const CleaningJobCreateValid = JobCreateValid.keys({
+
+const CleaningJobValid = JobValid.keys({
     duration: Joi.object({
         uid: Joi.string().required(),
         fee: Joi.number().required(),
@@ -43,7 +32,7 @@ const CleaningJobCreateValid = JobCreateValid.keys({
     ).min(1).required()
 })
 
-const HealthcareJobCreateValid = JobCreateValid.keys({
+const HealthcareJobValid = JobValid.keys({
     shift: Joi.object({
         uid: Joi.string().required(),
         fee: Joi.number().required(),
@@ -64,7 +53,7 @@ const HealthcareJobCreateValid = JobCreateValid.keys({
     ).min(1).required()
 })
 
-const MaintenanceJobCreateValid = JobCreateValid.keys({
+const MaintenanceJobValid = JobValid.keys({
     services: Joi.array().items(
         Joi.object({
             uid: Joi.string().required(),
@@ -80,18 +69,63 @@ const MaintenanceJobCreateValid = JobCreateValid.keys({
     )
 })
 
-const CleaningJobGetvalid = CleaningJobCreateValid.keys({
+const CleaningJobCreateValid = CleaningJobValid.keys({
+    userID: Joi.string().required(),
+})
+
+const HealthcareJobCreateValid = HealthcareJobValid.keys({
+    userID: Joi.string().required(),
+})
+
+const MaintenanceJobCreateValid = MaintenanceJobValid.keys({
+    userID: Joi.string().required(),
+})
+
+const CleaningJobGetvalid = CleaningJobValid.keys({
     uid: Joi.string().required(),
+    user: Joi.object({
+        uid: Joi.string().required(),
+        username: Joi.string().required(),
+        gender: Joi.string().required(),
+        dob: Joi.string().required(),
+        avatar: Joi.string().required(),
+        email: Joi.string().email().required(),
+        tel: Joi.string().required(),
+        location: Joi.string().required(),
+        role: Joi.string().valid('user').required()
+    }).required(),
     createdAt: Joi.string().required(),
 })
 
-const HealthcareJobGetValid = HealthcareJobCreateValid.keys({
+const HealthcareJobGetValid = HealthcareJobValid.keys({
     uid: Joi.string().required(),
+    user: Joi.object({
+        uid: Joi.string().required(),
+        username: Joi.string().required(),
+        gender: Joi.string().required(),
+        dob: Joi.string().required(),
+        avatar: Joi.string().required(),
+        email: Joi.string().email().required(),
+        tel: Joi.string().required(),
+        location: Joi.string().required(),
+        role: Joi.string().valid('user').required()
+    }).required(),
     createdAt: Joi.string().required(),
 })
 
-const MaintenanceJobGetValid = MaintenanceJobCreateValid.keys({
+const MaintenanceJobGetValid = MaintenanceJobValid.keys({
     uid: Joi.string().required(),
+    user: Joi.object({
+        uid: Joi.string().required(),
+        username: Joi.string().required(),
+        gender: Joi.string().required(),
+        dob: Joi.string().required(),
+        avatar: Joi.string().required(),
+        email: Joi.string().email().required(),
+        tel: Joi.string().required(),
+        location: Joi.string().required(),
+        role: Joi.string().valid('user').required()
+    }).required(),
     createdAt: Joi.string().required()
 })
 

@@ -5,6 +5,9 @@ const { failResponse, successDataResponse } = require("../utils/response");
 const { CleaningJobCreateValid, HealthcareJobCreateValid, MaintenanceJobCreateValid } = require("../utils/validator/JobValid");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
 const redis = require('../config/redis');
+const AccountService = require('../services/AccountService');
+const UserService = require('../services/UserService');
+const UserModel = require('../models/UserModel');
 
 dayjs.extend(customParseFormat);
 
@@ -59,6 +62,23 @@ const getByUID = async (req, res) => {
 
         if (exists) {
             const data = await redis.get(`/jobs/${serviceType.toLowerCase()}/${jobID}`);
+            const account = await AccountService.getByUID(data.userID);
+            const user = await UserService.getByUID(data.userID);
+
+            delete data['userID'];
+            const currentUser = new UserModel(
+                user.uid, 
+                user.username, 
+                user.gender,
+                user.dob,
+                user.avatar,
+                user.tel,
+                user.location,
+                account.email,
+                account.role,
+                account.provider
+            )
+            data['user'] = currentUser.getInfo();
             return successDataResponse(res, 200, data, 'job');
         }
 

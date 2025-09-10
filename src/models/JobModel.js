@@ -1,12 +1,11 @@
 class JobModel {
-    constructor(uid, userID, startTime, serviceType, workerQuantity, price, isWeek, listDays, createdAt, status, location) {
+    constructor(uid, userID, startTime, serviceType, workerQuantity, price, listDays, createdAt, status, location) {
         this.uid = uid;
         this.userID = userID;
         this.startTime = startTime;
         this.serviceType = serviceType;
         this.workerQuantity = workerQuantity;
         this.price = price;
-        this.isWeek = isWeek;
         this.listDays = listDays;
         this.createdAt = createdAt;
         this.status = status;
@@ -15,8 +14,8 @@ class JobModel {
 }
 
 class CleaningJobModel extends JobModel {
-    constructor(uid, userID, startTime, serviceType, workerQuantity, price, isWeek, listDays, createdAt, status, location, durationID, services, isCooking, isIroning) {
-        super(uid, userID, startTime, serviceType, workerQuantity, price, isWeek, listDays, createdAt, status, location);
+    constructor(uid, userID, startTime, serviceType, workerQuantity, price, listDays, createdAt, status, location, durationID, services, isCooking, isIroning) {
+        super(uid, userID, startTime, serviceType, workerQuantity, price, listDays, createdAt, status, location);
         this.durationID = durationID;
         this.services = services;
         this.isCooking = isCooking;
@@ -25,8 +24,8 @@ class CleaningJobModel extends JobModel {
 }
 
 class HealthcareJobModel extends JobModel {
-    constructor(uid, userID, startTime, serviceType, workerQuantity, price, isWeek, listDays, createdAt, status, location, shiftID, isWeek, services) {
-        super(uid, userID, startTime, serviceType, workerQuantity, price, isWeek, listDays, createdAt, status, location);
+    constructor(uid, userID, startTime, serviceType, workerQuantity, price, listDays, createdAt, status, location, shiftID, isWeek, services) {
+        super(uid, userID, startTime, serviceType, workerQuantity, price, listDays, createdAt, status, location);
         this.shiftID = shiftID;
         this.services = services;
     }

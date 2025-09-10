@@ -17,12 +17,11 @@ class JobService {
             }
             
             const newJob = {
-                userID: validated.user.uid,
+                userID: validated.userID,
                 startTime: validated.startTime,
                 serviceType: validated.serviceType,
                 workerQuantity: validated.workerQuantity,
                 price: validated.price,
-                isWeek: validated.isWeek,
                 listDays: validated.listDays,
                 createdAt: new Date(),
                 status: validated.status,
@@ -56,12 +55,11 @@ class JobService {
             }
 
             const newJob = {
-                userID: validated.user.uid,
+                userID: validated.userID,
                 startTime: validated.startTime,
                 serviceType: validated.serviceType,
                 workerQuantity: validated.workerQuantity,
                 price: validated.price,
-                isWeek: validated.isWeek,
                 listDays: validated.listDays,
                 createdAt: new Date(), 
                 status: validated.status,
@@ -96,12 +94,11 @@ class JobService {
             }
 
             const newJob = {
-                userID: validated.user.uid,
+                userID: validated.userID,
                 startTime: validated.startTime,
                 serviceType: validated.serviceType,
                 workerQuantity: validated.workerQuantity,
                 price: validated.price,
-                isWeek: validated.isWeek,
                 listDays: validated.listDays,
                 createdAt: new Date(), 
                 status: validated.status,
