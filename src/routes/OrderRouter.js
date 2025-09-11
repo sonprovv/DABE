@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createOrder, getOrdersByJobID, getOrdersByWorkerID, putByUID } = require('../controllers/OrderController');
+const { createOrder, getOrdersByJobID, getOrdersByWorkerID, putStatusByUID } = require('../controllers/OrderController');
 const { verifyToken } = require('../middleware/verifyToken');
 const { checkPermission } = require('../middleware/checkPermission');
 
@@ -10,6 +10,6 @@ router.get('/:jobID', verifyToken, checkPermission(['user']), getOrdersByJobID);
 
 router.get('/worker/:workerID', verifyToken, checkPermission(['worker']), getOrdersByWorkerID);
 
-router.put('/update', verifyToken, checkPermission(['user']), putByUID);
+router.put('/update', verifyToken, checkPermission(['user']), putStatusByUID);
 
 module.exports = router;

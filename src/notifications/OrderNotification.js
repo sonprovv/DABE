@@ -1,7 +1,7 @@
 const { db, admin } = require("../config/firebase");
 
 const orderStatus = async (order) => {
-    if (order.status!=='Finished') {
+    if (order.status!=='Completed') {
         const notify = {
             jobID: order.jobID,
             title: 'Thông báo công việc',

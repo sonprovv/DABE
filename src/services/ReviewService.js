@@ -1,15 +1,21 @@
 const { db } = require("../config/firebase");
 const AccountService = require('../services/AccountService');
 const UserService = require('../services/UserService');
+const { formatDate } = require("../utils/formatDate");
 
 class ReviewService {
     constructor() {}
 
-    async createReview(data) {
+    async createReview(validated) {
         try {
-            const docRef = await db.collection('reviews').add(data);
+            const [ reviewRef, reviewed ] = await Promise.all([
+                db.collection('reviews').add(validated),
+                db.collection('orders').doc(validated.orderID).update({
+                    isReview: true
+                })
+            ])
 
-            return { uid: docRef.id, ...data };
+            return { uid: reviewRef.id, ...data };
         } catch (err) {
             console.log(err.message);
             throw new Error("Tạo đánh giá không thành công")
@@ -36,15 +42,14 @@ class ReviewService {
                 const userDoc = await UserService.getByUID(doc.data().userID);
                 userDoc['email'] = accountDoc.email;
                 userDoc['role'] = accountDoc.role;
+                userDoc['dob'] = formatDate(userDoc['dob'].toDate())
 
                 const review = {
                     uid: doc.id,
                     user: userDoc,
-                    workerID: doc.data().workerID,
                     isReview: doc.data().isReview,
                     rating: doc.data().rating,
                     comment: doc.data().comment,
-                    servicetype: doc.data().serviceType
                 }
 
                 experiences[doc.data().serviceType]['stars'].push(doc.data().rating);
@@ -72,9 +77,16 @@ class ReviewService {
         }
     }
 
-    async getReviewOfWorker(workerID, serviceType) {
+    async getReviewByOrderID(orderID) {
         try {
+            const snapshot = await db.collection('reviews').where('orderID', '==', orderID).get();
+            if (snapshot.empty) {
+                throw new Error("No review found for this order");
+            }
 
+            const reviewDoc = snapshot.docs[0];
+
+            return { uid: reviewDoc.id, rating: reviewDoc.data().rating, comment: reviewDoc.data().comment }
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin")

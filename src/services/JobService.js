@@ -117,33 +117,40 @@ class JobService {
         }
     }
 
-    async getJobNew() {
-    try {
-        const now = new Date();
-        const dayPre10 = new Date(now.getTime() - 20 * 24 * 60 * 60 *1000);
-
-        const [snapshotCleaning, snapshotHealthcare, snapshotMaintenance] = await Promise.all([
-            db.collection('cleaningJobs').where('createdAt', '>=', dayPre10).get(),
-            db.collection('healthcareJobs').where('createdAt', '>=', dayPre10).get(),
-            db.collection('maintenanceJobs').where('createdAt', '>=', dayPre10).get(),
-        ]);
-
-        const res = [
-            ...snapshotCleaning.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
-            ...snapshotHealthcare.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
-            ...snapshotMaintenance.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
-        ];
-
-        res.sort((a, b) => b.createdAt - a.createdAt);
-
-        const jobs = await Promise.all(res.map(job => this.getJob(job.uid, job)));
-
-        return jobs;
-    } catch (err) {
-        console.log(err.message);
-        throw new Error("Không thành công");
+    async putStatusByUID(uid, serviceType, status) {
+        const db_name = `${serviceType.toLowerCase()}Jobs`;
+        await db.collection(db_name).doc(uid).update({
+            status: status
+        })
     }
-}
+
+    async getJobNew() {
+        try {
+            const now = new Date();
+            const dayPre10 = new Date(now.getTime() - 20 * 24 * 60 * 60 *1000);
+
+            const [snapshotCleaning, snapshotHealthcare, snapshotMaintenance] = await Promise.all([
+                db.collection('cleaningJobs').where('createdAt', '>=', dayPre10).get(),
+                db.collection('healthcareJobs').where('createdAt', '>=', dayPre10).get(),
+                db.collection('maintenanceJobs').where('createdAt', '>=', dayPre10).get(),
+            ]);
+
+            const res = [
+                ...snapshotCleaning.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
+                ...snapshotHealthcare.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
+                ...snapshotMaintenance.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
+            ];
+
+            res.sort((a, b) => b.createdAt - a.createdAt);
+
+            const jobs = await Promise.all(res.map(job => this.getJob(job.uid, job)));
+
+            return jobs;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không thành công");
+        }
+    }
 
     async getByUID(uid, serviceType) {
         try {

@@ -1,6 +1,7 @@
 const { db } = require("../config/firebase");
 const AccountService = require("./AccountService");
 const JobService = require("./JobService");
+const ReviewService = require("./ReviewService");
 const WorkerService = require("./WorkerService");
 
 class OrderService {
@@ -30,7 +31,12 @@ class OrderService {
                     isReview: doc.data().isReview,
                     status: doc.data().status,
                     createdAt: doc.data().createdAt,
-                    serviceType: doc.data().serviceType
+                    serviceType: doc.data().serviceType,
+                }
+
+                if (tmp.isReview) {
+                    const review = await ReviewService.getReviewByOrderID(tmp.uid);
+                    tmp['review'] = review;
                 }
                 orders.push(tmp);
             }))
@@ -61,6 +67,11 @@ class OrderService {
                     createdAt: doc.data().createdAt,
                     serviceType: doc.data().serviceType
                 }
+
+                if (tmp.isReview) {
+                    const review = await ReviewService.getReviewByOrderID(tmp.uid);
+                    tmp['review'] = review;
+                }
                 orders.push(tmp);
             }))
 
@@ -71,25 +82,10 @@ class OrderService {
         }
     }
 
-    async putByUID(validated) {
-        const data = {
-            jobID: validated.jobID,
-            workerID: validated.worker.uid,
-            isReview: validated.isReview,
-            status: validated.status,
-            serviceType: validated.serviceType
-        }
-        try {
-            const orderRef = db.collection('orders').doc(validated.uid);
-            orderRef.update(data)
-
-            const updatedOrder = await orderRef.get();
-
-            return validated;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Thất bại")
-        }
+    async putStatusByUID(uid, status) {
+        await db.collection('orders').doc(uid).update({
+            status: status
+        })
     }
 }
 

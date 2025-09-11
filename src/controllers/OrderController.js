@@ -1,6 +1,6 @@
 const OrderService = require("../services/OrderService");
 const { failResponse, successResponse, successDataResponse } = require("../utils/response");
-const { OrderCreateValid, OrderGetValid } = require("../utils/validator/OrderValid");
+const { OrderCreateValid, OrderUpdateStatusValid } = require("../utils/validator/OrderValid");
 
 const { orderStatus } = require("../notifications/OrderNotification");
 const { formatDateAndTimeNow } = require("../utils/formatDate");
@@ -45,12 +45,12 @@ const getOrdersByJobID = async (req, res) => {
     }
 }
 
-const putByUID = async (req, res) => {
+const putStatusByUID = async (req, res) => {
     try {
-        const order = req.body;
-        const validated = await OrderGetValid.validateAsync(order, { stripUnknown: true });
+        const { uid, status } = req.body;
+        await OrderUpdateStatusValid.validateAsync(order, { stripUnknown: true });
 
-        const updatedOrder = await OrderService.putByUID(validated);
+        const updatedOrder = await OrderService.putStatusByUID(uid, status);
 
         await orderStatus(updatedOrder);
 
@@ -63,7 +63,7 @@ const putByUID = async (req, res) => {
 
 module.exports = {
     createOrder,
-    putByUID,
+    putStatusByUID,
     getOrdersByWorkerID,
     getOrdersByJobID
 };

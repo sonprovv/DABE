@@ -1,4 +1,6 @@
 const { db, admin } = require("../config/firebase");
+const JobService = require("../services/JobService");
+const OrderService = require("../services/OrderService");
 const TimeService = require("../services/TimeService");
 const { formatDateAndTimeNow } = require("../utils/formatDate");
 
@@ -52,9 +54,14 @@ const getEndTime = async (startTime, uid, serviceType) => {
 }
 
 const findWorkerAndNotify = async (job, notify) => {
-    const snapshotOrder = await db.collection("orders").where('jobID', '==', job.id).get();
+    const snapshotOrder = await db.collection("orders").where('jobID', '==', job.uid).get();
 
     await Promise.allSettled(snapshotOrder.docs.map(async (doc) => {
+
+        if (doc.data().status!=job.status) {
+            const updatedOrder = await OrderService.putStatusByUID(doc.id, job.status);
+        }
+
         const workerID = doc.data().workerID;
 
         const deviceDoc = await db.collection('devices').doc(workerID).get();
@@ -83,24 +90,28 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
         
         const { date, time, time30 } = getTimeNotication();
 
-        const snapshot = await db.collection(collectionName).get();
+        const snapshot = await db.collection(collectionName).where('status', '!=', 'Completed').get();
 
-        for (const job of snapshot.docs) {
+        for (const doc of snapshot.docs) {
+            const job = {
+                uid: doc.id,
+                ...doc.data()
+            }
 
             let endTime;
             try {
                 if (serviceType==='CLEANING') {
-                    endTime = await getEndTime(job.data().startTime, job.data().durationID, job.data().serviceType);
+                    endTime = await getEndTime(job.startTime, job.durationID, job.serviceType);
                 }
                 else if (serviceType==='HEALTHCARE') {
-                    endTime = await getEndTime(job.data().startTime, job.data().shiftID, job.data().serviceType);
+                    endTime = await getEndTime(job.startTime, job.shiftID, job.serviceType);
                 }
             } catch (errr) {
                 continue;
             }
 
             const notify = {
-                jobID: job.id,
+                jobID: job.uid,
                 title: 'Thông báo công việc',
                 content: '',
                 time: null,
@@ -108,9 +119,9 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 createdAt: formatDateAndTimeNow()
             }
 
-            if (job.data().startTime===time30) {
+            if (job.startTime===time30) {
                 let check = false;
-                for (const day of job.data().listDays) {
+                for (const day of job.listDays) {
                     if (day===date) {
                         check = true;
                         break;
@@ -119,12 +130,12 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
 
                 if (check) {
                     notify['content'] = 'Công việc sẽ bắt đầu sau 30 phút.\n Vui lòng sắp xếp di chuyển để thực hiện công việc.';
-                    notify['time'] = job.data().startTime;
+                    notify['time'] = job.startTime;
                     await findWorkerAndNotify(job, notify);
                 }
             }
-            else if (job.data().startTime===time) {
-                for (const day of job.data().listDays) {
+            else if (job.startTime===time) {
+                for (const day of job.listDays) {
                     if (day===date) {
                         check = true;
                         break;
@@ -132,18 +143,31 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 }
 
                 if (check) {
+                    if (job.status!=='Processing') {
+                        await JobService.putStatusByUID(job.uid, job.serviceType, 'Processing');
+                        job['status'] = 'Processing';
+                    }
                     notify['content'] = 'Công việc đã bắt đầu.';
-                    notify['time'] = job.data().startTime;
+                    notify['time'] = job.startTime;
                     await findWorkerAndNotify(job, notify);
                 }
             }
             else if (endTime===time) {
                 let check = false;
-                for (const day of job.data().listDays) {
-                    if (day===date) {
+                let completed = false;
+                const listDays = job.listDays;
+
+                for (let i = 0; i < listDays.length; i++) {
+                    if (listDays[i]===date) {
                         check = true;
+                        if (i===listDays.length-1) completed = true;
                         break;
                     }
+                }
+
+                if (completed) {
+                    await JobService.putStatusByUID(job.uid, job.serviceType, 'Completed');
+                    job['status'] = 'Completed'
                 }
 
                 if (check) {

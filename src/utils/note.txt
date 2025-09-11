@@ -1,0 +1,21 @@
+Status Of Order:
+
+    Waiting     ->   Pending worker application
+
+    Accepted    ->   Worker application accepted
+
+    Rejected    ->   Worker application rejected
+
+    Processing  ->   In progess
+
+    Completed   ->   Completed (Chỉ khi là ngày cuối cùng, nếu chưa phải ngày cuối cùng thì vẫn là Processing)
+
+Status Of Job:
+
+    Hiring      ->   Hiring worker
+
+    Closed      ->   The job has enough workers
+
+    Processing  ->   In progess
+
+    Completed   ->   Completed (Chỉ khi là ngày cuối cùng, nếu chưa phải ngày cuối cùng thì vẫn là Processing)

@@ -6,7 +6,7 @@ const JobValid = Joi.object({
     workerQuantity: Joi.number().default(1),
     price: Joi.number().required(),
     listDays: Joi.array().items(Joi.string()).min(1).required(),
-    status: Joi.string().default('Active'),
+    status: Joi.string().default('Hiring'),
     location: Joi.string().required(),
 })
 
