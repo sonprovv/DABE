@@ -71,13 +71,15 @@ const findWorkerAndNotify = async (job, notify) => {
         if (!devices || devices.length===0) return;
 
         notify['clientID'] = workerID;
-        await admin.messaging().sendToDevice(devices, {
+        const message = {
+            tokens: devices,
             notification: {
                 title: notify.title,
                 body: notify.content
             },
             data: notify
-        })
+        }
+        await admin.messaging().sendEachForMulticast(message);
 
         await db.collection('notifications').add(notify);
     }))
@@ -90,14 +92,19 @@ const findUserOfJob = async (userID, notify) => {
     const devices = deviceDoc.data().devices;
     if (!devices || devices.length===0) return; 
 
+    console.log('kldj')
     notify['clientID'] = userID;
-    await admin.messaging().sendToDevice(devices, {
+    const message = {
+        tokens: devices,
         notification: {
             title: notify.title,
             body: notify.content
         },
         data: notify
-    })
+    }
+    const response = await admin.messaging().sendEachForMulticast(message);
+    console.log("FCM Response:", response);
+    // await admin.messaging().send(message); with token: device
     await db.collection('notifications').add(notify);
 }
 
