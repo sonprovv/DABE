@@ -83,6 +83,24 @@ const findWorkerAndNotify = async (job, notify) => {
     }))
 }
 
+const findUserOfJob = async (userID, notify) => {
+    const deviceDoc = await db.collection('devices').doc(userID).get();
+    if (!deviceDoc.exists) return;
+
+    const devices = deviceDoc.data().devices;
+    if (!devices || devices.length===0) return; 
+
+    notify['clientID'] = userID;
+    await admin.messaging().sendToDevice(devices, {
+        notification: {
+            title: notify.title,
+            body: notify.content
+        },
+        data: notify
+    })
+    await db.collection('notifications').add(notify);
+}
+
 const jobSchedule = (serviceType, collectionName, intervalRef) => {
     if (intervalRef.value) return;
 
@@ -120,60 +138,42 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
             }
 
             if (job.startTime===time30) {
-                let check = false;
-                for (const day of job.listDays) {
-                    if (day===date) {
-                        check = true;
-                        break;
-                    }
-                }
-
-                if (check) {
+                if (job.listDays.includes(date)) {
                     notify['content'] = 'Công việc sẽ bắt đầu sau 30 phút.\n Vui lòng sắp xếp di chuyển để thực hiện công việc.';
                     notify['time'] = job.startTime;
-                    await findWorkerAndNotify(job, notify);
+                    await Promise.all([
+                        findWorkerAndNotify(job, notify),
+                        findUserOfJob(job.userID, notify)
+                    ])
                 }
             }
             else if (job.startTime===time) {
-                for (const day of job.listDays) {
-                    if (day===date) {
-                        check = true;
-                        break;
-                    }
-                }
-
-                if (check) {
+                if (job.listDays.includes(date)) {
                     if (job.status!=='Processing') {
                         await JobService.putStatusByUID(job.uid, job.serviceType, 'Processing');
                         job['status'] = 'Processing';
                     }
                     notify['content'] = 'Công việc đã bắt đầu.';
                     notify['time'] = job.startTime;
-                    await findWorkerAndNotify(job, notify);
+                    await Promise.all([
+                        findWorkerAndNotify(job, notify),
+                        findUserOfJob(job.userID, notify)
+                    ])
                 }
             }
             else if (endTime===time) {
-                let check = false;
-                let completed = false;
-                const listDays = job.listDays;
-
-                for (let i = 0; i < listDays.length; i++) {
-                    if (listDays[i]===date) {
-                        check = true;
-                        if (i===listDays.length-1) completed = true;
-                        break;
+                if (job.listDays.includes(date)) {
+                    const index = job.listDays.indexOf(date);
+                    if (index===job.listDays.length-1) {
+                        await JobService.putStatusByUID(job.uid, job.serviceType, 'Completed');
+                        job['status'] = 'Completed'
                     }
-                }
-
-                if (completed) {
-                    await JobService.putStatusByUID(job.uid, job.serviceType, 'Completed');
-                    job['status'] = 'Completed'
-                }
-
-                if (check) {
                     notify['content'] = 'Công việc đã kết thúc';
                     notify['time'] = endTime;
-                    await findWorkerAndNotify(job, notify);
+                    await Promise.all([
+                        findWorkerAndNotify(job, notify),
+                        findUserOfJob(job.userID, notify)
+                    ])
                 }
             }
         }
