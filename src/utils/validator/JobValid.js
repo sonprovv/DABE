@@ -3,7 +3,6 @@ const Joi = require('joi');
 const JobValid = Joi.object({
     startTime: Joi.string().required(),
     serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required(),
-    workerQuantity: Joi.number().default(1),
     price: Joi.number().required(),
     listDays: Joi.array().items(Joi.string()).min(1).required(),
     status: Joi.string().default('Hiring'),
@@ -12,27 +11,18 @@ const JobValid = Joi.object({
 
 
 const CleaningJobValid = JobValid.keys({
+    isCooking: Joi.boolean().required(),
+    isIroning: Joi.boolean().required(),
     duration: Joi.object({
         uid: Joi.string().required(),
         fee: Joi.number().required(),
         workingHour: Joi.number().required(),
         description: Joi.string().required()
     }),
-    // options: 
-    isCooking: Joi.boolean().required(),
-    isIroning: Joi.boolean().required(),
-    services: Joi.array().items(
-        Joi.object({
-            uid: Joi.string().required(),
-            image: Joi.string().required(),
-            serviceType: Joi.string().valid('CLEANING').required(),
-            serviceName: Joi.string().required(),
-            tasks: Joi.array().items(Joi.string()).required()
-        })
-    ).min(1).required()
 })
 
 const HealthcareJobValid = JobValid.keys({
+    workerQuantity: Joi.number().required(),
     shift: Joi.object({
         uid: Joi.string().required(),
         fee: Joi.number().required(),
@@ -40,15 +30,8 @@ const HealthcareJobValid = JobValid.keys({
     }),
     services: Joi.array().items(
         Joi.object({
-            healthcareService: Joi.object({
-                uid: Joi.string().required(),
-                image: Joi.string().required(),
-                serviceType: Joi.string().valid('HEALTHCARE').required(),
-                serviceName: Joi.string().required(),
-                duties: Joi.array().items(Joi.string()).required(),
-                excludedTasks: Joi.array().items(Joi.string()).required()
-            }).required(),
-            quantity: Joi.number().required()
+            serviceID: Joi.string().required(),
+            quantity: Joi.number().valid(1, 2).required()
         })
     ).min(1).required()
 })

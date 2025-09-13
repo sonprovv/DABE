@@ -10,24 +10,17 @@ class JobService {
     constructor() {}
 
     async createCleaningJob(validated) {
-        try {
-            const serviceIDs = [];
-            for (const service of validated.services) {
-                serviceIDs.push(service.uid)
-            }
-            
+        try {            
             const newJob = {
                 userID: validated.userID,
                 startTime: validated.startTime,
                 serviceType: validated.serviceType,
-                workerQuantity: validated.workerQuantity,
                 price: validated.price,
                 listDays: validated.listDays,
                 createdAt: new Date(),
                 status: validated.status,
                 location: validated.location,
                 durationID: validated.duration.uid,
-                services: serviceIDs,
                 isCooking: validated.isCooking,
                 isIroning: validated.isIroning,
             }
@@ -46,10 +39,10 @@ class JobService {
         try {
             const healthcareDetailIDs = [];
 
-            for (const healthcareDetails of validated.services) {
+            for (const service of validated.services) {
                 const detailRef = await db.collection('healthcareDetails').add({
-                    healthcareServiceID: healthcareDetails.healthcareService.uid,
-                    quantity: healthcareDetails.quantity,
+                    serviceID: service.serviceID,
+                    quantity: service.quantity,
                 })
                 healthcareDetailIDs.push(detailRef.id)
             }
@@ -58,8 +51,8 @@ class JobService {
                 userID: validated.userID,
                 startTime: validated.startTime,
                 serviceType: validated.serviceType,
-                workerQuantity: validated.workerQuantity,
                 price: validated.price,
+                workerQuantity: validated.workerQuantity,
                 listDays: validated.listDays,
                 createdAt: new Date(), 
                 status: validated.status,
@@ -97,7 +90,6 @@ class JobService {
                 userID: validated.userID,
                 startTime: validated.startTime,
                 serviceType: validated.serviceType,
-                workerQuantity: validated.workerQuantity,
                 price: validated.price,
                 listDays: validated.listDays,
                 createdAt: new Date(), 
@@ -237,23 +229,6 @@ class JobService {
         }
     }
 
-    async getHealthcareDetails(lst) {
-        try {
-            const details = [];
-
-            for (const serviceID of lst) {
-                const detailDoc = await db.collection('healthcareDetails').doc(serviceID).get();
-                if (!detailDoc.exists) continue;
-                details.push(detailDoc.data());
-            }
-
-            return details;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Không thành công")
-        }
-    }
-
     async getMaintenanceJobs() {
         try {
             const snapshot = await db.collection('maintenanceJobs').get();
@@ -289,28 +264,20 @@ class JobService {
 
         if (data.serviceType==='CLEANING') {
             const duration = await TimeService.getDurationByID(data.durationID);
-            const services = [];
-            for (const serviceID of data.services) {
-                const serviceDoc = await ServiceService.getCleaningServiceByUID(serviceID);
-                services.push(serviceDoc);
-            }
             data['duration'] = duration;
-            data['services'] = services;
             const validated = await CleaningJobGetvalid.validateAsync(data, { stripUnknown: true });
             return validated;
         }
         else if (data.serviceType==='HEALTHCARE') {
             const shift = await TimeService.getShiftByID(data.shiftID);
-            const serviceIDs = data.services;
-
-            const details = await this.getHealthcareDetails(serviceIDs);
+            const healthcareDetails = data.services;
 
             const services = [];
-            for (const service of details) {
-                const serviceDoc = await ServiceService.getHealthcareServiceByUID(service.healthcareServiceID);
+            for (const healthcareDetailID of healthcareDetails) {
+                const serviceQuantityDoc = await db.collection('healthcareDetails').doc(healthcareDetailID).get();
                 services.push({
-                    healthcareService: serviceDoc,
-                    quantity: service.quantity
+                    serviceID: serviceQuantityDoc.data().serviceID,
+                    quantity: serviceQuantityDoc.data().quantity
                 })
             } 
             data['shift'] = shift;

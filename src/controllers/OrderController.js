@@ -49,6 +49,10 @@ const putStatusByUID = async (req, res) => {
     try {
         const { uid, status } = req.body;
 
+        if (status!='Accepted' && status!='Rejected') {
+            failResponse(res, 401, 'Sai trạng thái');
+        }
+
         const updatedOrder = await OrderService.putStatusByUID(uid, status);
 
         console.log(updatedOrder)

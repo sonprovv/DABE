@@ -50,7 +50,7 @@ class OrderService {
 
     async getOrdersByJobID(jobID) {
         try {
-            const snapshot = await db.collection('orders').where('jobID', '==', jobID).where('status', '!=', 'Rejected').get();
+            const snapshot = await db.collection('orders').where('jobID', '==', jobID).get();
             const orders = [];
             await Promise.all(snapshot.docs.map(async (doc) => {
                 const accountDoc = await AccountService.getByUID(doc.data().workerID);
@@ -72,6 +72,7 @@ class OrderService {
                     const review = await ReviewService.getReviewByOrderID(tmp.uid);
                     tmp['review'] = review;
                 }
+
                 orders.push(tmp);
             }))
 
