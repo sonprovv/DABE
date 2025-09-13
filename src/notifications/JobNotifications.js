@@ -53,8 +53,25 @@ const getEndTime = async (startTime, uid, serviceType) => {
     return `${hour.toString().padStart(2, '0')}:${minute}`;
 }
 
+const deleteFcmToken = async (response, clientID, devices) => {
+    const tokens = [];
+    for (let i = 0; i < response.responses.length; i++) {
+        const res = response.responses[i];
+        const validToken = devices[i];
+
+        if (res.success) {
+            tokens.push(validToken);
+        }
+    }
+    console.log(tokens);
+    await db.collection('devices').doc(clientID).update({
+        devices: tokens
+    })
+}
+
 const findWorkerAndNotify = async (job, notify) => {
     const snapshotOrder = await db.collection("orders").where('jobID', '==', job.uid).get();
+    if (!snapshotOrder.exists) return;
 
     await Promise.allSettled(snapshotOrder.docs.map(async (doc) => {
 
@@ -79,9 +96,12 @@ const findWorkerAndNotify = async (job, notify) => {
             },
             data: notify
         }
-        await admin.messaging().sendEachForMulticast(message);
-
+        const response = await admin.messaging().sendEachForMulticast(message);
         await db.collection('notifications').add(notify);
+
+        if (response.failureCount!==0) {
+            deleteFcmToken(response, workerID, devices);
+        }
     }))
 }
 
@@ -92,7 +112,6 @@ const findUserOfJob = async (userID, notify) => {
     const devices = deviceDoc.data().devices;
     if (!devices || devices.length===0) return; 
 
-    console.log('kldj')
     notify['clientID'] = userID;
     const message = {
         tokens: devices,
@@ -106,6 +125,9 @@ const findUserOfJob = async (userID, notify) => {
     console.log("FCM Response:", response);
     // await admin.messaging().send(message); with token: device
     await db.collection('notifications').add(notify);
+    if (response.failureCount!==0) {
+        deleteFcmToken(response, userID, devices);
+    }
 }
 
 const jobSchedule = (serviceType, collectionName, intervalRef) => {
@@ -155,6 +177,7 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 }
             }
             else if (job.startTime===time) {
+                console.log(serviceType);
                 if (job.listDays.includes(date)) {
                     if (job.status!=='Processing') {
                         await JobService.putStatusByUID(job.uid, job.serviceType, 'Processing');
@@ -169,6 +192,7 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 }
             }
             else if (endTime===time) {
+                console.log(serviceType)
                 if (job.listDays.includes(date)) {
                     const index = job.listDays.indexOf(date);
                     if (index===job.listDays.length-1) {

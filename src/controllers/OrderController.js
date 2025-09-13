@@ -48,7 +48,6 @@ const getOrdersByJobID = async (req, res) => {
 const putStatusByUID = async (req, res) => {
     try {
         const { uid, status } = req.body;
-        await OrderUpdateStatusValid.validateAsync(order, { stripUnknown: true });
 
         const updatedOrder = await OrderService.putStatusByUID(uid, status);
 
