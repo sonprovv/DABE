@@ -86,6 +86,10 @@ class OrderService {
         await db.collection('orders').doc(uid).update({
             status: status
         })
+
+        const updatedOrder = await db.collection('orders').doc(uid).get();
+
+        return { uid: updatedOrder.id, ...updatedOrder.data() }
     }
 }
 

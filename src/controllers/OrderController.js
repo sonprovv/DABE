@@ -51,6 +51,7 @@ const putStatusByUID = async (req, res) => {
 
         const updatedOrder = await OrderService.putStatusByUID(uid, status);
 
+        console.log(updatedOrder)
         await orderStatus(updatedOrder);
 
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
