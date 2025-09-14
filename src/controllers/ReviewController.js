@@ -7,9 +7,9 @@ const createReview = async (req, res) => {
         const rawData = req.body;
         const validated = await ReviewCreateValid.validateAsync(rawData, { stripUnknown: true });
 
-        await ReviewService.createReview(validated);
+        const result = await ReviewService.createReview(validated);
 
-        return successResponse(res, 200, 'Thành công');
+        return successDataResponse(res, 200, result, 'review');
     } catch (err) {
         console.log(err.message);
         return failResponse(res, 500, err.message);

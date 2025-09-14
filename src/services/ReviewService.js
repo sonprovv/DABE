@@ -15,7 +15,7 @@ class ReviewService {
                 })
             ])
 
-            return { uid: reviewRef.id, ...data };
+            return { uid: reviewRef.id, rating: validated.rating, comment: validated.comment };
         } catch (err) {
             console.log(err.message);
             throw new Error("Tạo đánh giá không thành công")
