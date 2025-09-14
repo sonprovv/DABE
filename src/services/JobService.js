@@ -9,6 +9,14 @@ const UserService = require("./UserService");
 class JobService {
     constructor() {}
 
+    async checkServiceType(uid, serviceType) {
+        const db_name = `${serviceType.toLowerCase()}Jobs`;
+        const job = await db.collection(db_name).doc(uid).get();
+
+        if (job.exists) return true;
+        return false;
+    }
+
     async createCleaningJob(validated) {
         try {            
             const newJob = {
