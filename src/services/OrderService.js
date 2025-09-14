@@ -19,6 +19,16 @@ class OrderService {
         }
     }
 
+    async checkOrder(workerID, jobID) {
+        const orderRef = await db.collection('orders')
+            .where('workerID', '==', workerID)
+            .where('jobID', '==', jobID)
+            .get()
+        
+        if (orderRef.empty) return true;
+        return false;
+    }
+
     async getOrdersByWorkerID(workerID) {
         try {
             const snapshot = await db.collection('orders').where('workerID', '==', workerID).get();

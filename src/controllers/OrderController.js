@@ -8,8 +8,15 @@ const { formatDateAndTimeNow } = require("../utils/formatDate");
 const createOrder = async (req, res) => {
     try {
         const rawData = req.body;
+
         rawData['createdAt'] = formatDateAndTimeNow();
         const validated = await OrderCreateValid.validateAsync(rawData, { stripUnknown: true });
+
+        const success = await OrderService.checkOrder(validated.workerID, validated.jobID);
+
+        if (!success) {
+            return failResponse(res, 401, 'Bạn đã ứng tuyển vào công việc này!')
+        }
 
         await OrderService.createOrder(validated);
         return successResponse(res, 200, 'Thành công')
