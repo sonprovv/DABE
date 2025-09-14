@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { formatDate } = require("../utils/formatDate");
 const AccountService = require("./AccountService");
 const JobService = require("./JobService");
 const ReviewService = require("./ReviewService");
@@ -55,7 +56,7 @@ class OrderService {
             await Promise.all(snapshot.docs.map(async (doc) => {
                 const accountDoc = await AccountService.getByUID(doc.data().workerID);
                 const workerDoc = await WorkerService.getByUID(doc.data().workerID);
-
+                workerDoc['dob'] = formatDate(typeof workerDoc.dob.toDate === 'function' ? workerDoc.dob.toDate() : workerDoc.dob)
                 workerDoc['email'] = accountDoc.email;
                 workerDoc['role'] = accountDoc.role;
 
