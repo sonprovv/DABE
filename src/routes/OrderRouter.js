@@ -6,8 +6,7 @@ const { checkPermission } = require('../middleware/checkPermission');
 
 router.post('/create', verifyToken, checkPermission(['worker']), createOrder);
 
-// router.get('/:jobID', verifyToken, checkPermission(['user']), getOrdersByJobID);
-router.get('/:jobID', getOrdersByJobID);
+router.get('/:jobID', verifyToken, checkPermission(['user']), getOrdersByJobID);
 
 router.get('/worker/:workerID', verifyToken, checkPermission(['worker']), getOrdersByWorkerID);
 
