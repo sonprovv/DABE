@@ -138,12 +138,12 @@ class JobService {
             ]);
 
             const res = [
-                ...snapshotCleaning.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
-                ...snapshotHealthcare.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
-                ...snapshotMaintenance.docs.map(doc => ({ uid: doc.id, ...doc.data() })),
+                ...snapshotCleaning.docs.map(doc => ({ uid: doc.id, ...doc.data() })).filter(job => job.status == 'Hiring'),
+                ...snapshotHealthcare.docs.map(doc => ({ uid: doc.id, ...doc.data() })).filter(job => job.status == 'Hiring'),
+                ...snapshotMaintenance.docs.map(doc => ({ uid: doc.id, ...doc.data() })).filter(job => job.status == 'Hiring'),
             ];
 
-            res.sort((a, b) => b.createdAt - a.createdAt);
+            res.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
 
             const jobs = await Promise.all(res.map(job => this.getJob(job.uid, job)));
 

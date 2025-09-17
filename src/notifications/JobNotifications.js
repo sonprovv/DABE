@@ -63,7 +63,6 @@ const deleteFcmToken = async (response, clientID, devices) => {
             tokens.push(validToken);
         }
     }
-    console.log(tokens);
     await db.collection('devices').doc(clientID).update({
         devices: tokens
     })
@@ -71,15 +70,23 @@ const deleteFcmToken = async (response, clientID, devices) => {
 
 const findWorkerAndNotify = async (job, notify) => {
     const snapshotOrder = await db.collection("orders").where('jobID', '==', job.uid).get();
-    if (!snapshotOrder.exists) return;
+    if (snapshotOrder.empty) return;
 
-    await Promise.allSettled(snapshotOrder.docs.map(async (doc) => {
+    const docs = snapshotOrder.docs.filter(d => d.data().status != 'Rejected');
+    if (docs.length==0) return;
+
+    await Promise.allSettled(docs.map(async (doc) => {
 
         if (doc.data().status!=job.status) {
             const updatedOrder = await OrderService.putStatusByUID(doc.id, job.status);
         }
 
         const workerID = doc.data().workerID;
+        
+        await db.collection('notifications').add({
+            ...notify,
+            clientID: workerID
+        });
 
         const deviceDoc = await db.collection('devices').doc(workerID).get();
         if (!deviceDoc.exists) return;
@@ -87,7 +94,6 @@ const findWorkerAndNotify = async (job, notify) => {
         const devices = deviceDoc.data().devices;
         if (!devices || devices.length===0) return;
 
-        notify['clientID'] = workerID;
         const message = {
             tokens: devices,
             notification: {
@@ -95,9 +101,8 @@ const findWorkerAndNotify = async (job, notify) => {
                 body: notify.content
             },
             data: notify
-        }
+        }        
         const response = await admin.messaging().sendEachForMulticast(message);
-        await db.collection('notifications').add(notify);
 
         if (response.failureCount!==0) {
             deleteFcmToken(response, workerID, devices);
@@ -106,13 +111,17 @@ const findWorkerAndNotify = async (job, notify) => {
 }
 
 const findUserOfJob = async (userID, notify) => {
+    await db.collection('notifications').add({
+        ...notify,
+        clientID: userID
+    });
+    
     const deviceDoc = await db.collection('devices').doc(userID).get();
     if (!deviceDoc.exists) return;
 
     const devices = deviceDoc.data().devices;
     if (!devices || devices.length===0) return; 
 
-    notify['clientID'] = userID;
     const message = {
         tokens: devices,
         notification: {
@@ -122,9 +131,8 @@ const findUserOfJob = async (userID, notify) => {
         data: notify
     }
     const response = await admin.messaging().sendEachForMulticast(message);
-    console.log("FCM Response:", response);
+    // console.log("FCM Response:", response);
     // await admin.messaging().send(message); with token: device
-    await db.collection('notifications').add(notify);
     if (response.failureCount!==0) {
         deleteFcmToken(response, userID, devices);
     }
@@ -137,7 +145,7 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
         
         const { date, time, time30 } = getTimeNotication();
 
-        const snapshot = await db.collection(collectionName).where('status', '!=', 'Completed').get();
+        const snapshot = await db.collection(collectionName).where('status', 'not-in', ['Completed']).get();
 
         for (const doc of snapshot.docs) {
             const job = {
@@ -162,10 +170,12 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 title: 'Thông báo công việc',
                 content: '',
                 time: null,
+                isRead: false,
                 serviceType: serviceType,
-                createdAt: formatDateAndTimeNow()
+                createdAt: new Date()
             }
 
+            console.log('in')
             if (job.startTime===time30) {
                 if (job.listDays.includes(date)) {
                     notify['content'] = 'Công việc sẽ bắt đầu sau 30 phút.\n Vui lòng sắp xếp di chuyển để thực hiện công việc.';
@@ -177,7 +187,6 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 }
             }
             else if (job.startTime===time) {
-                console.log(serviceType);
                 if (job.listDays.includes(date)) {
                     if (job.status!=='Processing') {
                         await JobService.putStatusByUID(job.uid, job.serviceType, 'Processing');
@@ -192,7 +201,6 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 }
             }
             else if (endTime===time) {
-                console.log(serviceType)
                 if (job.listDays.includes(date)) {
                     const index = job.listDays.indexOf(date);
                     if (index===job.listDays.length-1) {
