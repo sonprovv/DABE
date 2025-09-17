@@ -36,6 +36,9 @@ app.use('/api/schedules', ScheduleRouter);
 const ReviewRouter = require('./src/routes/ReviewRouter');
 app.use('/api/reviews', ReviewRouter);
 
+const NotificationRouter = require('./src/routes/NotificationRouter');
+app.use('/api/notifications', NotificationRouter);
+
 const userSockets = require('./src/notifications/userSockets');
 const io = new Server(server, {
     cors: { origin: "*" }

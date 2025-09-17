@@ -175,7 +175,6 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
                 createdAt: new Date()
             }
 
-            console.log('in')
             if (job.startTime===time30) {
                 if (job.listDays.includes(date)) {
                     notify['content'] = 'Công việc sẽ bắt đầu sau 30 phút.\n Vui lòng sắp xếp di chuyển để thực hiện công việc.';
