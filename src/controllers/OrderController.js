@@ -14,15 +14,14 @@ const createOrder = async (req, res) => {
         const validated = await OrderCreateValid.validateAsync(rawData, { stripUnknown: true });
 
         const checkServiceType = await JobService.checkServiceType(validated.jobID, validated.serviceType);
-
-        if (checkServiceType!==validated.serviceType) {
-            return failResponse(res, 401, `ServiceType của Job khác với ServiceType body`);
+        if (!checkServiceType) {
+            return failResponse(res, 500, `ServiceType của Job khác với ServiceType body`);
         }
 
         const success = await OrderService.checkOrder(validated.workerID, validated.jobID);
 
         if (!success) {
-            return failResponse(res, 401, 'Bạn đã ứng tuyển vào công việc này!')
+            return failResponse(res, 500, 'Bạn đã ứng tuyển vào công việc này!')
         }
 
         

@@ -13,7 +13,9 @@ class JobService {
         const db_name = `${serviceType.toLowerCase()}Jobs`;
         const job = await db.collection(db_name).doc(uid).get();
 
-        if (job.exists) return true;
+        if (job.exists && job.data().serviceType===serviceType) {
+            return true;
+        }
         return false;
     }
 
