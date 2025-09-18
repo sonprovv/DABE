@@ -3,6 +3,6 @@ const router = express.Router();
 const { verifyToken } = require('../middleware/verifyToken');
 const { postFcmToken } = require('../controllers/DeviceController');
 
-router.post('/:clientID', verifyToken, postFcmToken);
+router.post('', verifyToken, postFcmToken);
 
 module.exports = router;

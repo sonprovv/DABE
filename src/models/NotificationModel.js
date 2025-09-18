@@ -4,6 +4,7 @@ class NotificationModel {
 
     constructor(data) {
         this.uid = data.uid;
+        this.jobID = data.jobID;
         this.title = data.title;
         this.content = data.content;
         this.isRead = data.isRead;
@@ -15,6 +16,7 @@ class NotificationModel {
     getInfo() {
         return {
             uid: this.uid,
+            jobID: this.jobID,
             title: this.title,
             content: this.content,
             isRead: this.isRead,

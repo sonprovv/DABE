@@ -36,6 +36,9 @@ app.use('/api/schedules', ScheduleRouter);
 const ReviewRouter = require('./src/routes/ReviewRouter');
 app.use('/api/reviews', ReviewRouter);
 
+const DeviceRouter = require('./src/routes/DeviceRouter');
+app.use('/api/devices', DeviceRouter);
+
 const NotificationRouter = require('./src/routes/NotificationRouter');
 app.use('/api/notifications', NotificationRouter);
 

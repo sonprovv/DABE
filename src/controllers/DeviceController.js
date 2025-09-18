@@ -3,17 +3,24 @@ const { failResponse, successResponse } = require("../utils/response");
 
 const postFcmToken = async (req, res) => {
     try {
-        const { clientID } = req.user.id;
+        const clientID = req.user.uid;
         const { fcmToken } = req.body;
 
         const deviceDoc = await db.collection('devices').doc(clientID).get();
-        const devices = deviceDoc.data().devices;
+        if (deviceDoc.exists) {
+            const devices = deviceDoc.data().devices;
 
-        devices.push(fcmToken);
+            devices.push(fcmToken);
 
-        await db.collection('devices').doc(clientID).update({
-            devices: devices
-        })
+            await db.collection('devices').doc(clientID).update({
+                devices: devices
+            })
+        }
+        else {
+            await db.collection('devices').doc(clientID).set({
+                devices: [fcmToken]
+            })
+        }
 
         return successResponse(res, 200, 'Thành công')
     } catch (err) {
