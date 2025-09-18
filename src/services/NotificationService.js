@@ -7,7 +7,7 @@ class NotificationService {
     async getByClientID(clientID) {
         try {
             const snapshot = await db.collection('notifications').where('clientID', '==', clientID).get();
-            if (snapshot.empty) throw new Error('Bạn chưa có thông báo nào');
+            if (snapshot.empty) return [];
 
             const res = [
                 ...snapshot.docs.map(doc => new NotificationModel({ uid: doc.id, ...doc.data() }))
