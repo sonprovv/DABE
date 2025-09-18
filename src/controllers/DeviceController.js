@@ -10,11 +10,16 @@ const postFcmToken = async (req, res) => {
         if (deviceDoc.exists) {
             const devices = deviceDoc.data().devices;
 
-            devices.push(fcmToken);
+            if (!devices.includes(fcmToken)) {
+                devices.push(fcmToken);
 
-            await db.collection('devices').doc(clientID).update({
-                devices: devices
-            })
+                await db.collection('devices').doc(clientID).update({
+                    devices: devices
+                })
+            }
+            else {
+                return failResponse(res, 500, 'FcmToken đã tồn tại')
+            }
         }
         else {
             await db.collection('devices').doc(clientID).set({
@@ -29,4 +34,27 @@ const postFcmToken = async (req, res) => {
     }
 }
 
-module.exports = { postFcmToken };
+const deleteFcmToken = async (req, res) => {
+    try {
+        const clientID = req.user.uid;
+        const { fcmToken } = req.body;
+
+        const deviceDoc = await db.collection('devices').doc(clientID).get();
+        if (deviceDoc.exists) {
+            const { devices = [] } = deviceDoc.data();
+
+            const result = devices.filter(token => token!==fcmToken);
+
+            await db.collection('devices').doc(clientID).update({
+                devices: result
+            })
+        }
+        
+        return successResponse(res, 200, 'Thành công')
+    } catch (err) {
+        console.log(err.message);
+        return failResponse(res, 500, 'Lỗi FCM Token');
+    }
+}
+
+module.exports = { postFcmToken, deleteFcmToken };

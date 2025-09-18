@@ -2,7 +2,6 @@ const { db, admin } = require("../config/firebase");
 const JobService = require("../services/JobService");
 const OrderService = require("../services/OrderService");
 const TimeService = require("../services/TimeService");
-const { formatDateAndTimeNow } = require("../utils/formatDate");
 
 let cleaningJobInterval = null, healthcareJobInterval = null;
 
@@ -55,10 +54,13 @@ const getEndTime = async (startTime, uid, serviceType) => {
 
 const deleteFcmToken = async (response, clientID, devices) => {
     const tokens = [];
+    console.log(response)
     for (let i = 0; i < response.responses.length; i++) {
         const res = response.responses[i];
         const validToken = devices[i];
 
+        console.log(res.success)
+        console.log(validToken)
         if (res.success) {
             tokens.push(validToken);
         }
@@ -99,8 +101,7 @@ const findWorkerAndNotify = async (job, notify) => {
             notification: {
                 title: notify.title,
                 body: notify.content
-            },
-            data: notify
+            }
         }        
         const response = await admin.messaging().sendEachForMulticast(message);
 
@@ -127,12 +128,12 @@ const findUserOfJob = async (userID, notify) => {
         notification: {
             title: notify.title,
             body: notify.content
-        },
-        data: notify
+        }
     }
     const response = await admin.messaging().sendEachForMulticast(message);
     // console.log("FCM Response:", response);
     // await admin.messaging().send(message); with token: device
+    console.log(response);
     if (response.failureCount!==0) {
         deleteFcmToken(response, userID, devices);
     }
