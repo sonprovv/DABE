@@ -1,31 +1,42 @@
-FROM node:18
+# Build stage for Python dependencies
+FROM python:3.9-slim as python-builder
 
-# Install Python and pip
+WORKDIR /app/python
+COPY src/ai/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Final stage
+FROM node:18-slim
+
+# Install Python and copy built dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Create Python virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy Python dependencies from builder
+COPY --from=python-builder /usr/local/lib/python3.9/site-packages /opt/venv/lib/python3.9/site-packages
+
 WORKDIR /app
 
-# Copy package files
+# Copy Node.js package files and install dependencies
 COPY package*.json ./
-
-# Install Node.js dependencies
 RUN npm install
 
-# Copy Python requirements first (for better caching)
-COPY src/ai/requirements.txt ./src/ai/
-
-# Install Python dependencies
-RUN cd src/ai && pip3 install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application
+# Copy application files
 COPY . .
 
-# Make sure the chroma_db directory exists
+# Create necessary directories
 RUN mkdir -p src/chroma_db
+
+# Set environment variables
+ENV PYTHONPATH=/opt/venv/lib/python3.9/site-packages
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Expose port
 EXPOSE 3000

@@ -5,25 +5,41 @@ from langchain.prompts import PromptTemplate
 
 import os
 import sys
-import json
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import HuggingFacePipeline
+from langchain.vectorstores import Chroma
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.prompts import PromptTemplate
 
-# Add the parent directory to Python path to fix imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
+try:
+    # Add the parent directory to Python path to fix imports
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(current_dir)
+    sys.path.append(parent_dir)
 
-PERSIST_DIR = os.path.join(parent_dir, "chroma_db")
+    print("Python path:", sys.path)
+    print("Current directory:", current_dir)
+    print("Parent directory:", parent_dir)
 
-# --------- Load embeddings and vector store ---------
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-vs = Chroma(
-    persist_directory=PERSIST_DIR,
-    embedding_function=embeddings
-)
+    PERSIST_DIR = os.path.join(parent_dir, "chroma_db")
+    print("Chroma DB directory:", PERSIST_DIR)
+
+    # --------- Load embeddings and vector store ---------
+    print("Loading embeddings model...")
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
+        model_kwargs={'device': 'cpu'}
+    )
+    print("Embeddings model loaded successfully")
+
+    print("Initializing Chroma vector store...")
+    vs = Chroma(
+        persist_directory=PERSIST_DIR,
+        embedding_function=embeddings
+    )
+    print("Chroma vector store initialized successfully")
+
+except Exception as e:
+    print(f"Error during initialization: {str(e)}", file=sys.stderr)
+    raise
 
 # --------- Prompt ép trả lời Tiếng Việt ---------
 prompt_template = """
