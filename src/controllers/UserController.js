@@ -6,7 +6,7 @@ const AccountService = require("../services/AccountService");
 const WorkerService = require("../services/WorkerService");
 const { failResponse, successDataResponse, successResponse } = require("../utils/response");
 const { UserInfoValid, WorkerInfoValid, UserValid, WorkerValid } = require("../utils/validator/UserValid");
-const { ForgotPasswordValid } = require("../utils/validator/AuthValid");
+const { ForgotPasswordValid, ChangePasswordValid } = require("../utils/validator/AuthValid");
 const { auth, db } = require("../config/firebase");
 const { default: axios } = require("axios");
 const dotenv = require('dotenv');
@@ -33,7 +33,8 @@ const getUser = async (account) => {
             user.tel,
             user.location,
             account.email,
-            account.role
+            account.role,
+            account.provider
         )
         return currentUser.getInfo();
     }
@@ -49,6 +50,7 @@ const getUser = async (account) => {
             user.location,
             account.email,
             account.role,
+            account.provider,
             user.description
         )
         return currentUser.getInfo();
@@ -77,7 +79,7 @@ const getMe = async (req, res) => {
         })
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, "Không tìm thấy thông tin người dùng")
+        return failResponse(res, 500, "Không tìm thấy thông tin người dùng")
     }
 }
 
@@ -97,7 +99,7 @@ const loginWithGG = async (req, res) => {
             
             const existingAccount = accountSnapshot.docs[0]?.data();
             if (existingAccount && existingAccount.provider !== 'google.com') {
-                return failResponse(res, 400, `Email này đã được đăng ký với ${existingAccount.provider}. Vui lòng đăng nhập bằng ${existingAccount.provider}`);
+                return failResponse(res, 500, `Email này đã được đăng ký với ${existingAccount.provider}. Vui lòng đăng nhập bằng ${existingAccount.provider}`);
             }
         }
 
@@ -148,7 +150,7 @@ const loginWithGG = async (req, res) => {
         })
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, "Không thành công")
+        return failResponse(res, 500, "Không thành công")
     }
 }
 
@@ -218,7 +220,7 @@ const forgotPassword = async (req, res) => {
         return successResponse(res, 200, "Mật khẩu đã được thay đổi")
 
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -226,7 +228,7 @@ const changePassword = async (req, res) => {
     try {
         const emailToken = req.user.email;
         const rawData = req.body;
-        const validated = await ForgotPasswordValid.validateAsync({email: emailToken, ...rawData}, { stripUnknown: true });
+        const validated = await ChangePasswordValid.validateAsync({email: emailToken, ...rawData}, { stripUnknown: true });
 
         const userRecord = await auth.getUserByEmail(validated.email);
         await auth.updateUser(userRecord.uid, {
@@ -236,7 +238,7 @@ const changePassword = async (req, res) => {
         return successResponse(res, 200, "Mật khẩu đã được thay đổi")
 
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -246,23 +248,23 @@ const updateUser = async (req, res) => {
 
         const allowedRoles = ['user', 'worker'];
         if (!allowedRoles.includes(req.body.role)) {
-            return failResponse(res, 400, "Role không hợp lệ");
+            return failResponse(res, 500, "Role không hợp lệ");
         }
 
         let userData;
         if (req.body.role==='user') {
-            const validated = await UserInfoValid.validateAsync(rawData, { stripUnknown: true });
+            const validated = await UserValid.validateAsync(rawData, { stripUnknown: true });
             userData = await UserService.updateUser(validated);
         }
         else {
-            const validated = await WorkerInfoValid.validateAsync(rawData, { stripUnknown: true });
+            const validated = await WorkerValid.validateAsync(rawData, { stripUnknown: true });
             userData = await WorkerService.updateUser(validated);
         }
         userData["email"] = req.body.email;
         userData["role"] = req.body.role;
         return successDataResponse(res, 200, userData, 'user')
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -272,7 +274,7 @@ const deleteUser = async (req, res) => {
 
         const allowedRoles = ['user', 'worker'];
         if (!allowedRoles.includes(req.body.role)) {
-            return failResponse(res, 400, "Role không hợp lệ");
+            return failResponse(res, 500, "Role không hợp lệ");
         }
 
         if (req.body.role==='user') {
@@ -285,7 +287,7 @@ const deleteUser = async (req, res) => {
         }
         return successResponse(res, 200, "Xóa người dùng thành công")
     } catch (err) {
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 

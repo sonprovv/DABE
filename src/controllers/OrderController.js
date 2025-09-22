@@ -1,18 +1,36 @@
 const OrderService = require("../services/OrderService");
 const { failResponse, successResponse, successDataResponse } = require("../utils/response");
-const { OrderCreateValid, OrderGetValid } = require("../utils/validator/OrderValid");
+const { OrderCreateValid } = require("../utils/validator/OrderValid");
+
+const { orderStatus } = require("../notifications/OrderNotification");
+const { formatDateAndTimeNow } = require("../utils/formatDate");
+const JobService = require("../services/JobService");
 
 const createOrder = async (req, res) => {
     try {
         const rawData = req.body;
+
+        rawData['createdAt'] = formatDateAndTimeNow();
         const validated = await OrderCreateValid.validateAsync(rawData, { stripUnknown: true });
 
-        const { worker, ...data } = validated; 
-        await OrderService.createOrder({ workerID: worker.uid, ...data });
+        const checkServiceType = await JobService.checkServiceType(validated.jobID, validated.serviceType);
+        if (!checkServiceType) {
+            return failResponse(res, 500, `ServiceType của Job khác với ServiceType body`);
+        }
+
+        const success = await OrderService.checkOrder(validated.workerID, validated.jobID);
+
+        if (!success) {
+            return failResponse(res, 500, 'Bạn đã ứng tuyển vào công việc này!')
+        }
+
+        
+
+        await OrderService.createOrder(validated);
         return successResponse(res, 200, 'Thành công')
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -25,7 +43,7 @@ const getOrdersByWorkerID = async (req, res) => {
         return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
@@ -38,27 +56,33 @@ const getOrdersByJobID = async (req, res) => {
         return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
-const putByUID = async (req, res) => {
+const putStatusByUID = async (req, res) => {
     try {
-        const order = req.body;
-        const validated = await OrderGetValid.validateAsync(order, { stripUnknown: true });
+        const { uid, status } = req.body;
 
-        const updatedOrder = await OrderService.putByUID(validated);
+        if (status!='Accepted' && status!='Rejected') {
+            failResponse(res, 401, 'Sai trạng thái');
+        }
+
+        const updatedOrder = await OrderService.putStatusByUID(uid, status);
+
+        console.log(updatedOrder)
+        await orderStatus(updatedOrder);
 
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message)
+        return failResponse(res, 500, err.message)
     }
 }
 
 module.exports = {
     createOrder,
-    putByUID,
+    putStatusByUID,
     getOrdersByWorkerID,
     getOrdersByJobID
 };

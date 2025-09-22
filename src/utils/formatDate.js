@@ -53,11 +53,11 @@ const getDate = (hour, minute, duration) => {
     return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
 }
 
-const getStartAndEndTime = (startTime, dayOfWeek, time) => {
+const getStartAndEndTime = (startTime, listDays, time) => {
     const [hour, minute] = startTime.split(':').map(Number);
     
-    let start = dayOfWeek[0], end = dayOfWeek[0];
-    for (const date of dayOfWeek) {
+    let start = listDays[0], end = listDays[0];
+    for (const date of listDays) {
         if (DOW[date]<DOW[start]) start = date;
         if (DOW[date]>DOW[end]) end = date;
     }
@@ -94,4 +94,15 @@ const formatDateAndTime = (date) => {
     return `${hour}:${minute} ${day}/${month}/${year}`;
 }
 
-module.exports = { getStartAndEndTime, formatDate, formatDateAndTime };
+const formatDateAndTimeNow = () => {
+    const d = new Date();
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear().toString();
+    const hour = d.getHours().toString().padStart(2, '0');
+    const minute = d.getMinutes().toString().padStart(2, '0');
+
+    return `${hour}:${minute} ${day}/${month}/${year}`;
+} 
+
+module.exports = { getStartAndEndTime, formatDate, formatDateAndTime, formatDateAndTimeNow };

@@ -9,9 +9,6 @@ app.use(cors());
 app.use(express.json());
 
 const server = http.createServer(app);
-const io = new Server(server);
-
-const userSockets = new Map();
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -33,15 +30,35 @@ app.use('/api/jobs', JobRouter);
 const OrderRouter = require('./src/routes/OrderRouter');
 app.use('/api/orders', OrderRouter);
 
+const ScheduleRouter = require('./src/routes/ScheduleRouter');
+app.use('/api/schedules', ScheduleRouter);
+
 const ReviewRouter = require('./src/routes/ReviewRouter');
 app.use('/api/reviews', ReviewRouter);
 
+const DeviceRouter = require('./src/routes/DeviceRouter');
+app.use('/api/devices', DeviceRouter);
 
+const NotificationRouter = require('./src/routes/NotificationRouter');
+app.use('/api/notifications', NotificationRouter);
+
+const userSockets = require('./src/notifications/userSockets');
+const io = new Server(server, {
+    cors: { origin: "*" }
+});
+
+// io.on("connection", (socket) => {
+//     console.log("Client connected: ", socket.id);
+
+// Socket connection handling
 io.on("connection", (socket) => {
     console.log("Client connected: ", socket.id);
 
     socket.on("register", (userID) => {
         userSockets.set(userID, socket);
+        socket.emit('createSocket', {
+            message: 'Emit thành công'
+        })
         console.log(`User ${userID} register with socket ${socket.id}`);
     })
 
@@ -56,6 +73,7 @@ io.on("connection", (socket) => {
     })
 })
 
+// Job Scheduling
 const { cleaningJobSchedule, healthcareJobSchedule } = require('./src/notifications/JobNotifications');
 cleaningJobSchedule(io, userSockets);
 healthcareJobSchedule(io, userSockets);

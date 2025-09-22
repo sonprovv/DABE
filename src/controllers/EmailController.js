@@ -27,7 +27,7 @@ const sendCode = async (req, res) => {
 
         return successDataResponse(res, 200, code.toString(), "code");
     } catch (err) {
-        return failResponse(res, 400, "Không thể gửi mã xác thực");
+        return failResponse(res, 500, "Không thể gửi mã xác thực");
     }
 }
 

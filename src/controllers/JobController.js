@@ -1,11 +1,13 @@
 const dayjs = require('dayjs');
 const JobService = require("../services/JobService");
-const { formatDate, getStartAndEndTime } = require("../utils/formatDate");
+const { formatDate } = require("../utils/formatDate");
 const { failResponse, successDataResponse } = require("../utils/response");
-const { CleaningJobCreateValid, HealthcareJobCreateValid } = require("../utils/validator/JobValid");
+const { CleaningJobCreateValid, HealthcareJobCreateValid, MaintenanceJobCreateValid } = require("../utils/validator/JobValid");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
-const { Timestamp } = require('../config/firebase');
 const redis = require('../config/redis');
+const AccountService = require('../services/AccountService');
+const UserService = require('../services/UserService');
+const UserModel = require('../models/UserModel');
 
 dayjs.extend(customParseFormat);
 
@@ -16,88 +18,39 @@ const createJob = async (req, res) => {
 
         if (serviceType.toUpperCase()==="CLEANING") {
             const validated = await CleaningJobCreateValid.validateAsync(rawData, { stripUnknown: true });
-            
-            const { startTime, endTime } = getStartAndEndTime(
-                validated.startTime,
-                validated.dayOfWeek,
-                validated.duration.workingHour
-            );
 
-            const serviceIDs = [];
-            for (const service of validated.services) {
-                serviceIDs.push(service.uid)
-            }
-            const newJob = {
-                userID: validated.user.uid,
-                serviceType: serviceType.toUpperCase(),
-                startTime: Timestamp.fromDate(dayjs(startTime, 'HH:mm DD/MM/YYYY').toDate()),
-                endTime: Timestamp.fromDate(dayjs(endTime, 'HH:mm DD/MM/YYYY').toDate()),
-                workerQuantity: validated.workerQuantity,
-                price: validated.price,
-                isWeek: validated.isWeek,
-                dayOfWeek: validated.dayOfWeek,
-                createdAt: new Date(),
-                status: validated.status,
-                durationID: validated.duration.uid,
-                // option: 
-                services: serviceIDs,
-                isCooking: validated.isCooking,
-                isIroning: validated.isIroning,
-            }
-            const uidNewJob = await JobService.createCleaningJob(newJob);
-            console.log('knj')
-            validated['uid'] = uidNewJob;
-            validated['startTime'] = startTime;
-            validated['endTime'] = endTime;
-            validated['createdAt'] = formatDate(newJob.createdAt);
-            await redis.set(`/jobs/${serviceType}/${uidNewJob}`, validated);
-            return successDataResponse(res, 200, validated, 'newJob');
+            const job = await JobService.createCleaningJob(validated);
+            await redis.set(`/jobs/${validated.serviceType.toLowerCase()}/${job.uid}`, validated);
+            return successDataResponse(res, 200, job, 'newJob');
         }
         else if (serviceType.toUpperCase()==="HEALTHCARE") {
             const validated = await HealthcareJobCreateValid.validateAsync(rawData, { stripUnknown: true });
-            const newHealthcareDetails = [];
 
-             const { startTime, endTime } = getStartAndEndTime(
-                validated.startTime,
-                validated.dayOfWeek,
-                validated.shift.workingHour
-            );
+            const job = await JobService.createHealthcareJob(validated);
+            await redis.set(`/jobs/${validated.serviceType.toLowerCase()}/${job.uid}`, validated);
+            return successDataResponse(res, 200, job, 'newJob');
+        }
+        else if (serviceType.toUpperCase()==="MAINTENANCE") {
+            const validated = await MaintenanceJobCreateValid.validateAsync(rawData, { stripUnknown: true });
 
-            for (const healthcareDetails of validated.services) {
-                newHealthcareDetails.push({
-                    healthcareServiceID: healthcareDetails.healthcareService.uid,
-                    quantity: healthcareDetails.quantity,
-                })
-            }
-
-            const healthcareDetailIDs = await JobService.createHealthcareDetails(newHealthcareDetails);
-
-            const newJob = {
-                userID: validated.user.uid,
-                serviceType: serviceType.toUpperCase(),
-                startTime: Timestamp.fromDate(dayjs(startTime, 'HH:mm DD/MM/YYYY').toDate()),
-                endTime: Timestamp.fromDate(dayjs(endTime, 'HH:mm DD/MM/YYYY').toDate()),
-                workerQuantity: validated.workerQuantity,
-                price: validated.price,
-                isWeek: validated.isWeek,
-                dayOfWeek: validated.dayOfWeek,
-                createdAt: new Date(), 
-                status: validated.status,
-                shiftID: validated.shift.uid,
-                services: healthcareDetailIDs
-            }
-
-            const uidNewJob = await JobService.createHealthcareJob(newJob);
-            validated['uid'] = uidNewJob;
-            validated['startTime'] = startTime;
-            validated['endTime'] = endTime;
-            validated['createdAt'] = formatDate(newJob.createdAt);
-            await redis.set(`/jobs/${serviceType}/${uidNewJob}`, validated);
-            return successDataResponse(res, 200, validated, 'newJob');
+            const job = await JobService.createMaintenanceJob(validated);
+            await redis.set(`/jobs/${validated.serviceType.toLowerCase()}/${job.uid}`, validated);
+            return successDataResponse(res, 200, job, 'newJob');
         }
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message);
+        return failResponse(res, 500, err.message);
+    }
+}
+
+const getJobNew = async (req, res) => {
+    try {
+        const jobs = await JobService.getJobNew();
+
+        return successDataResponse(res, 200, jobs, 'jobs');
+    } catch (err) {
+        console.log(err.message);
+        return failResponse(res, 500, err.message);
     }
 }
 
@@ -109,6 +62,23 @@ const getByUID = async (req, res) => {
 
         if (exists) {
             const data = await redis.get(`/jobs/${serviceType.toLowerCase()}/${jobID}`);
+            const account = await AccountService.getByUID(data.userID);
+            const user = await UserService.getByUID(data.userID);
+
+            delete data['userID'];
+            const currentUser = new UserModel(
+                user.uid, 
+                user.username, 
+                user.gender,
+                user.dob,
+                user.avatar,
+                user.tel,
+                user.location,
+                account.email,
+                account.role,
+                account.provider
+            )
+            data['user'] = currentUser.getInfo();
             return successDataResponse(res, 200, data, 'job');
         }
 
@@ -117,7 +87,7 @@ const getByUID = async (req, res) => {
         return successDataResponse(res, 200, job, 'job');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message);
+        return failResponse(res, 500, err.message);
     }
 }
 
@@ -130,7 +100,7 @@ const getJobsByUserID = async (req, res) => {
         return successDataResponse(res, 200, jobs, 'jobs');
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message);
+        return failResponse(res, 500, err.message);
     }
 }
 
@@ -146,14 +116,19 @@ const getJobsByServiceType = async (req, res) => {
             const jobs = await JobService.getHealthcareJobs();
             return successDataResponse(res, 200, jobs, 'jobs');
         }
+        else if (serviceType.toUpperCase()==='MAINTENANCE') {
+            const jobs = await JobService.getMaintenanceJobs();
+            return successDataResponse(res, 200, jobs, 'jobs');
+        }
     } catch (err) {
         console.log(err.message);
-        return failResponse(res, 400, err.message);
+        return failResponse(res, 500, err.message);
     }
 }
 
 module.exports = {
     createJob,
+    getJobNew,
     getByUID,
     getJobsByUserID,
     getJobsByServiceType,

@@ -1,6 +1,7 @@
 class ServiceModel {
-    constructor(uid, serviceType, serviceName) {
+    constructor(uid, image, serviceType, serviceName) {
         this.uid = uid;
+        this.image = image;
         this.serviceType = serviceType;
         this.serviceName = serviceName
     }
@@ -11,15 +12,15 @@ class ServiceModel {
 }
 
 class CleaningServiceModel extends ServiceModel {
-    constructor(uid, serviceType, serviceName, image, tasks) {
-        super(uid, serviceType, serviceName);
-        this.image = image;
+    constructor(uid, image, serviceType, serviceName, tasks) {
+        super(uid, image, serviceType, serviceName);
         this.tasks = tasks;
     }
 
     getInfo() {
         return {
             uid: this.uid,
+            image: this.image,
             serviceType: this.serviceType,
             serviceName: this.serviceName,
             image: this.image,
@@ -29,8 +30,8 @@ class CleaningServiceModel extends ServiceModel {
 }
 
 class HealthcareServiceModel extends ServiceModel {
-    constructor(uid, serviceType, serviceName, duties, excludedTasks) {
-        super(uid, serviceType, serviceName);
+    constructor(uid, image, serviceType, serviceName, duties, excludedTasks) {
+        super(uid, image, serviceType, serviceName);
         this.duties = duties;
         this.excludedTasks = excludedTasks;
     }
@@ -38,6 +39,7 @@ class HealthcareServiceModel extends ServiceModel {
     getInfo() {
         return {
             uid: this.uid,
+            image: this.image,
             serviceType: this.serviceType,
             serviceName: this.serviceName,
             duties: this.duties,
@@ -46,4 +48,34 @@ class HealthcareServiceModel extends ServiceModel {
     }
 }
 
-module.exports = { CleaningServiceModel, HealthcareServiceModel };
+class MaintenanceServiceModel extends ServiceModel {
+    constructor(uid, image, serviceType, serviceName, powers, isMaintenance, maintenance) {
+        super(uid, image, serviceType, serviceName);
+        this.powers = powers;
+        this.isMaintenance = isMaintenance;
+        this.maintenance = maintenance;
+    }
+
+    getInfo() {
+
+        const res = [];
+        for (let power of this.powers) {
+            res.push({
+                powerName: power,
+                quantity: 0
+            })
+        }
+
+        return {
+            uid: this.uid,
+            image: this.image,
+            serviceType: this.serviceType,
+            serviceName: this.serviceName,
+            powers: res,
+            isMaintenance: this.isMaintenance,
+            maintenance: this.maintenance
+        }
+    }
+}
+
+module.exports = { CleaningServiceModel, HealthcareServiceModel, MaintenanceServiceModel };
