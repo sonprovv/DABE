@@ -11,7 +11,7 @@ const askQuestion = async (req, res) => {
         }
 
         // Gọi Python script
-        const pythonProcess = spawn('python3', [
+    const pythonProcess = spawn('python', [
             path.join(__dirname, '../ai/chat.py'),
             question
         ]);

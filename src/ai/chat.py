@@ -2,33 +2,14 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.chat_models import ChatOllama
 from langchain.prompts import PromptTemplate
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 import sys
 import pkg_resources
+import os
 
-# Print Python version and path
-print(f"Python version: {sys.version}")
-print(f"Python path: {sys.path}")
 
-# Print all installed packages
-print("\nInstalled packages:")
-for pkg in pkg_resources.working_set:
-    print(f"{pkg.key} = {pkg.version}")
-
-try:
-    import langchain
-    print(f"\nlangchain version: {langchain.__version__}")
-except ImportError as e:
-    print(f"\nError importing langchain: {e}")
-
-try:
-    import langchain_community
-    print(f"\nlangchain_community version: {langchain_community.__version__}")
-except ImportError as e:
-    print(f"\nError importing langchain_community: {e}")
-
-print("\nTest completed.")
-
+# Only print debug info if running interactively (no sys.argv)
 def debug_imports():
     print("\nDEBUG: Python Environment")
     print(f"Python Version: {sys.version}")
@@ -40,36 +21,44 @@ def debug_imports():
     print("\n".join(installed_packages))
 
 try:
-    debug_imports()
-    print("\nStarting initialization...")
+    if len(sys.argv) == 1:
+        debug_imports()
+        print("\nStarting initialization...")
 
     # Add the parent directory to Python path to fix imports
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
     if parent_dir not in sys.path:
         sys.path.append(parent_dir)
-        print(f"Added {parent_dir} to Python path")
+        if len(sys.argv) == 1:
+            print(f"Added {parent_dir} to Python path")
 
     PERSIST_DIR = os.path.join(parent_dir, "chroma_db")
-    print(f"Using Chroma DB directory: {PERSIST_DIR}")
+    if len(sys.argv) == 1:
+        print(f"Using Chroma DB directory: {PERSIST_DIR}")
 
     # --------- Load embeddings and vector store ---------
-    print("Loading embeddings model...")
+    if len(sys.argv) == 1:
+        print("Loading embeddings model...")
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={'device': 'cpu'}
     )
-    print("Embeddings model loaded successfully")
+    if len(sys.argv) == 1:
+        print("Embeddings model loaded successfully")
 
-    print("Initializing Chroma vector store...")
+    if len(sys.argv) == 1:
+        print("Initializing Chroma vector store...")
     vs = Chroma(
         persist_directory=PERSIST_DIR,
         embedding_function=embeddings
     )
-    print("Chroma vector store initialized successfully")
+    if len(sys.argv) == 1:
+        print("Chroma vector store initialized successfully")
 
 except Exception as e:
-    print(f"Error during initialization: {str(e)}", file=sys.stderr)
+    if len(sys.argv) == 1:
+        print(f"Error during initialization: {str(e)}", file=sys.stderr)
     raise
 
 # --------- Prompt ép trả lời Tiếng Việt ---------
@@ -91,37 +80,65 @@ CUSTOM_PROMPT = PromptTemplate(
     template=prompt_template,
 )
 
+
 # --------- LLM ---------
+LLM_MODEL = os.getenv("LLM_MODEL", "llama3")  # Đặt giá trị mặc định là 'llama3' (mạnh hơn) nếu không có biến môi trường
 llm = ChatOllama(model=LLM_MODEL)
 
 # --------- Chat loop ---------
-print("💬 Chat với tài liệu (embedding trước khi trả lời)\n")
+if len(sys.argv) == 1:
+    print("Chat voi tai lieu (embedding truoc khi tra loi)\n")
 
-queries = [
-    "Ứng dụng có những danh mục nào?",
-    "Dọn dẹp vệ sinh bao gồm những dịch vụ nào?",
-    "Chăm sóc sức khỏe bao gồm những dịch vụ nào?",
-    "Dịch vụ dọn dẹp Phòng khách bao gồm những công việc gì?",
-    "Dịch vụ chăm sóc người khuyết tật phải làm những gì?",
-    "Dịch vụ chăm sóc người lớn tuổi không làm những gì?"
-]
 
-for query in queries:
-    print("\nBạn:", query)
 
+import sys
+import json
+
+def answer_query(query):
     # --- 1. Embedding query ---
     query_vector = embeddings.embed_query(query)
-
     # --- 2. Search trong VectorDB ---
     docs = vs.similarity_search_by_vector(query_vector, k=4)
     context = "\n\n".join([d.page_content for d in docs])
-
     # --- 3. Gửi vào LLM ---
     prompt = CUSTOM_PROMPT.format(context=context, question=query)
     response = llm.invoke(prompt)
+    sources = [
+        {
+            "source": d.metadata.get('source'),
+            "chunk_id": d.metadata.get('chunk_id')
+        } for d in docs
+    ]
+    return {
+        "answer": response.content,
+        "sources": sources
+    }
 
-    print("\n🤖 Trả lời:", response.content)
-    print("\n📚 Nguồn:")
-    for d in docs:
-        print(f" - {d.metadata.get('source')} | chunk_id={d.metadata.get('chunk_id')}")
-    print("-" * 50)
+if len(sys.argv) > 1:
+    # Chạy từ API: nhận query từ dòng lệnh, trả về JSON
+    query = " ".join(sys.argv[1:])
+    result = answer_query(query)
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+    print(json.dumps(result, ensure_ascii=False))
+    sys.exit(0)
+else:
+    # Chạy tương tác nhập tay
+    while True:
+        try:
+            query = input("\nNhap cau hoi (hoac go 'exit' de thoat): ")
+            if query.strip().lower() == 'exit':
+                print("Da thoat.")
+                break
+            print("\nBan:", query)
+            result = answer_query(query)
+            print("\nTra loi:", result["answer"])
+            print("\nNguon:")
+            for s in result["sources"]:
+                print(f" - {s['source']} | chunk_id={s['chunk_id']}")
+            print("-" * 50)
+        except KeyboardInterrupt:
+            print("\nDa thoat.")
+            sys.exit(0)
