@@ -4,15 +4,18 @@ FROM ubuntu:22.04
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Node.js, npm, Python and build dependencies
+
+# Install curl, python, pip, build tools
 RUN apt-get update && apt-get install -y \
     curl \
-    nodejs \
-    npm \
     python3 \
     python3-pip \
     python3-venv \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20.x
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
 
 # Create and activate virtual environment
 ENV VIRTUAL_ENV=/opt/venv
@@ -39,9 +42,6 @@ COPY . .
 
 # Create necessary directories
 RUN mkdir -p src/chroma_db
-
-# Debug: xác nhận đang build bằng Dockerfile
-RUN echo "=== BUILD BY DOCKERFILE ===" > /dockerfile_build_check.txt
 
 # Expose port
 EXPOSE 3000
