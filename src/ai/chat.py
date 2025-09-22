@@ -3,12 +3,13 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.chat_models import ChatOllama
 from langchain.prompts import PromptTemplate
 
-# --------- Config ---------
 import os
 import sys
+import json
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.chat_models import ChatOllama
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.llms import HuggingFacePipeline
+from langchain.prompts import PromptTemplate
 
 # Add the parent directory to Python path to fix imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,11 +17,9 @@ parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 PERSIST_DIR = os.path.join(parent_dir, "chroma_db")
-EMBED_MODEL = "mxbai-embed-large:latest"
-LLM_MODEL = "llama3"
 
-# --------- Load vector store ---------
-embeddings = OllamaEmbeddings(model=EMBED_MODEL)
+# --------- Load embeddings and vector store ---------
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 vs = Chroma(
     persist_directory=PERSIST_DIR,
     embedding_function=embeddings

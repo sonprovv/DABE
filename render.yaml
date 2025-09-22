@@ -1,17 +1,9 @@
 services:
   - type: web
     name: dabe-backend
-    env: node
-    buildCommand: |
-      npm install
-      python3 -m pip install --upgrade pip
-      cd src/ai && pip install -r requirements.txt
-    startCommand: npm start
+    env: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PYTHON_VERSION
-        value: 3.9.0
-      - key: PATH
-        value: /opt/render/project/python/bin:${PATH}
     healthCheckPath: /api/health
