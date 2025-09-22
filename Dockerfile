@@ -40,6 +40,9 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p src/chroma_db
 
+# Debug: xác nhận đang build bằng Dockerfile
+RUN echo "=== BUILD BY DOCKERFILE ===" > /dockerfile_build_check.txt
+
 # Expose port
 EXPOSE 3000
 
