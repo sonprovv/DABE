@@ -23,7 +23,9 @@ RUN npm install
 
 # Copy Python requirements and install
 COPY src/ai/requirements.txt ./src/ai/
-RUN cd src/ai && pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --no-cache-dir pip==23.0.1 && \
+    cd src/ai && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
 COPY . .

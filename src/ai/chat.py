@@ -6,9 +6,8 @@ from langchain.prompts import PromptTemplate
 import os
 import sys
 import json
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.llms import HuggingFacePipeline
+from langchain.vectorstores import Chroma
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.prompts import PromptTemplate
 
 def debug_imports():
