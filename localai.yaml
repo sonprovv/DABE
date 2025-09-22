@@ -1,0 +1,19 @@
+models:
+  - name: embeddings
+    backend: llama
+    parameters:
+      model: /app/models/ggml-all-MiniLM-L6-v2.bin
+      embeddings: true
+      context_size: 512
+      threads: 4
+      f16: true
+    
+  - name: chat
+    backend: llama
+    parameters:
+      model: /app/models/llama-2-7b-chat.Q4_K_M.gguf
+      context_size: 2048
+      threads: 4
+      f16: true
+      temperature: 0.7
+      repeat_penalty: 1.1

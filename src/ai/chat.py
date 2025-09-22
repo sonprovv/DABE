@@ -3,12 +3,22 @@ from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain.prompts import PromptTemplate
 
 # --------- Config ---------
-PERSIST_DIR = "chroma_db"
-EMBED_MODEL = "mxbai-embed-large:latest"
-LLM_MODEL = "llama3"
+import os
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+
+PERSIST_DIR = "../chroma_db"
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "http://localhost:8080/v1")
 
 # --------- Load vector store ---------
-embeddings = OllamaEmbeddings(model=EMBED_MODEL)
+embeddings = OpenAIEmbeddings(
+    model="embeddings",
+    openai_api_base=OPENAI_API_BASE,
+    openai_api_key="not-needed"
+)
+
 vs = Chroma(
     persist_directory=PERSIST_DIR,
     embedding_function=embeddings

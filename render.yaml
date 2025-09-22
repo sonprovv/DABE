@@ -1,14 +1,15 @@
 services:
   - type: web
     name: dabe-backend
-    env: python
-    buildCommand: |
-      npm install
-      pip install -r src/ai/requirements.txt
-    startCommand: npm start
+    env: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
       - key: PYTHON_VERSION
         value: 3.9.0
+      - key: OPENAI_API_BASE
+        value: "http://localhost:8080/v1"
+      - key: LOCALAI_PORT
+        value: "8080"
     healthCheckPath: /api/health
