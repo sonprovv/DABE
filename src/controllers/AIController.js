@@ -21,16 +21,19 @@ const askQuestion = async (req, res) => {
 
         pythonProcess.stdout.on('data', (data) => {
             result += data.toString();
+            console.log('Python stdout:', data.toString());
         });
 
         pythonProcess.stderr.on('data', (data) => {
             error += data.toString();
+            console.error('Python stderr:', data.toString());
         });
 
         pythonProcess.on('close', (code) => {
+            console.log('Python process exited with code:', code);
             if (code !== 0) {
                 console.error('Python process error:', error);
-                return failResponse(res, 500, "Không thể xử lý câu hỏi lúc này");
+                return failResponse(res, 500, `Không thể xử lý câu hỏi lúc này. Lỗi: ${error}`);
             }
 
             try {

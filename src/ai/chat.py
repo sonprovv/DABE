@@ -1,24 +1,26 @@
-from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings, ChatOllama
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.chat_models import ChatOllama
 from langchain.prompts import PromptTemplate
 
 # --------- Config ---------
 import os
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from dotenv import load_dotenv
+import sys
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.chat_models import ChatOllama
 
-load_dotenv()
+# Add the parent directory to Python path to fix imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
 
-PERSIST_DIR = "../chroma_db"
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "http://localhost:8080/v1")
+PERSIST_DIR = os.path.join(parent_dir, "chroma_db")
+EMBED_MODEL = "mxbai-embed-large:latest"
+LLM_MODEL = "llama3"
 
 # --------- Load vector store ---------
-embeddings = OpenAIEmbeddings(
-    model="embeddings",
-    openai_api_base=OPENAI_API_BASE,
-    openai_api_key="not-needed"
-)
-
+embeddings = OllamaEmbeddings(model=EMBED_MODEL)
 vs = Chroma(
     persist_directory=PERSIST_DIR,
     embedding_function=embeddings
