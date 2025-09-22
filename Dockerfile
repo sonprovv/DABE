@@ -1,42 +1,35 @@
-# Build stage for Python dependencies
-FROM python:3.9-slim as python-builder
+# Use an official Python runtime as a parent image
+FROM python:3.9.18-alpine3.18
 
-WORKDIR /app/python
-COPY src/ai/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Node.js and npm
+RUN apk add --no-cache \
+    nodejs \
+    npm \
+    gcc \
+    g++ \
+    make \
+    python3-dev \
+    musl-dev \
+    linux-headers
 
-# Final stage
-FROM node:18-slim
-
-# Install Python and copy built dependencies
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create Python virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Copy Python dependencies from builder
-COPY --from=python-builder /usr/local/lib/python3.9/site-packages /opt/venv/lib/python3.9/site-packages
-
+# Set working directory
 WORKDIR /app
 
-# Copy Node.js package files and install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
+
+# Install Node.js dependencies
 RUN npm install
 
-# Copy application files
+# Copy Python requirements and install
+COPY src/ai/requirements.txt ./src/ai/
+RUN cd src/ai && pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
 COPY . .
 
 # Create necessary directories
 RUN mkdir -p src/chroma_db
-
-# Set environment variables
-ENV PYTHONPATH=/opt/venv/lib/python3.9/site-packages
-ENV PATH="/opt/venv/bin:$PATH"
 
 # Expose port
 EXPOSE 3000

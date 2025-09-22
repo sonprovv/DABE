@@ -5,22 +5,35 @@ from langchain.prompts import PromptTemplate
 
 import os
 import sys
-from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
+import json
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.llms import HuggingFacePipeline
 from langchain.prompts import PromptTemplate
 
+def debug_imports():
+    print("\nDEBUG: Python Environment")
+    print(f"Python Version: {sys.version}")
+    print(f"Python Path: {sys.path}")
+    print(f"Current Directory: {os.getcwd()}")
+    print("\nDEBUG: Installed Packages")
+    import pkg_resources
+    installed_packages = [f"{dist.key} {dist.version}" for dist in pkg_resources.working_set]
+    print("\n".join(installed_packages))
+
 try:
+    debug_imports()
+    print("\nStarting initialization...")
+
     # Add the parent directory to Python path to fix imports
     current_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(current_dir)
-    sys.path.append(parent_dir)
-
-    print("Python path:", sys.path)
-    print("Current directory:", current_dir)
-    print("Parent directory:", parent_dir)
+    if parent_dir not in sys.path:
+        sys.path.append(parent_dir)
+        print(f"Added {parent_dir} to Python path")
 
     PERSIST_DIR = os.path.join(parent_dir, "chroma_db")
-    print("Chroma DB directory:", PERSIST_DIR)
+    print(f"Using Chroma DB directory: {PERSIST_DIR}")
 
     # --------- Load embeddings and vector store ---------
     print("Loading embeddings model...")
