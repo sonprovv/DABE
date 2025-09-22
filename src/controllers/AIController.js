@@ -10,9 +10,8 @@ const askQuestion = async (req, res) => {
             return failResponse(res, 400, "Câu hỏi không được để trống");
         }
 
-        // Gọi Python script từ virtual environment
-        const pythonPath = process.env.PYTHON_PATH || 'python';
-        const pythonProcess = spawn(pythonPath, [
+        // Gọi Python script
+        const pythonProcess = spawn('python3', [
             path.join(__dirname, '../ai/chat.py'),
             question
         ]);

@@ -4,12 +4,14 @@ services:
     env: node
     buildCommand: |
       npm install
-      python -m pip install --upgrade pip
-      cd src/ai && python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && deactivate
+      python3 -m pip install --upgrade pip
+      cd src/ai && pip install -r requirements.txt
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PYTHON_PATH
-        value: /opt/render/project/src/src/ai/.venv/bin/python
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: PATH
+        value: /opt/render/project/python/bin:${PATH}
     healthCheckPath: /api/health
