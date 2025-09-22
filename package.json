@@ -6,9 +6,14 @@
   "author": "",
   "type": "commonjs",
   "main": "index.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "dev": "vercel dev",
-    "start": "node index.js"
+    "start": "node index.js",
+    "setup-ai": "pip install -r src/ai/requirements.txt",
+    "build": "npm install && npm run setup-ai"
   },
   "dependencies": {
     "@upstash/redis": "^1.35.3",

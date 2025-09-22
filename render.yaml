@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: dabe-backend
+    env: python
+    buildCommand: |
+      npm install
+      pip install -r src/ai/requirements.txt
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.9.0
+    healthCheckPath: /api/health

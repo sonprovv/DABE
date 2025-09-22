@@ -42,6 +42,12 @@ app.use('/api/devices', DeviceRouter);
 const NotificationRouter = require('./src/routes/NotificationRouter');
 app.use('/api/notifications', NotificationRouter);
 
+const AIRouter = require('./src/routes/AIRouter');
+app.use('/api/ai', AIRouter);
+
+const HealthRouter = require('./src/routes/HealthRouter');
+app.use('/api', HealthRouter);
+
 const userSockets = require('./src/notifications/userSockets');
 const io = new Server(server, {
     cors: { origin: "*" }
