@@ -66,6 +66,7 @@ const getMe = async (req, res) => {
         );
 
         const token = response.data.idToken;
+        
         const decoded = await auth.verifyIdToken(token);
 
         const uid = decoded.uid;

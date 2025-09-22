@@ -5,12 +5,14 @@ const { Server } = require('socket.io');
 const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization'],
+}));
 app.use(express.json());
 
-const server = http.createServer(app);
-
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// const server = http.createServer(app);
 
 const ImageRouter = require('./src/routes/ImageRouter');
 app.use('/api/images', ImageRouter);
@@ -42,10 +44,10 @@ app.use('/api/devices', DeviceRouter);
 const NotificationRouter = require('./src/routes/NotificationRouter');
 app.use('/api/notifications', NotificationRouter);
 
-const userSockets = require('./src/notifications/userSockets');
-const io = new Server(server, {
-    cors: { origin: "*" }
-});
+// const userSockets = require('./src/notifications/userSockets');
+// const io = new Server(server, {
+//     cors: { origin: "*" }
+// });
 
 // io.on("connection", (socket) => {
 //     console.log("Client connected: ", socket.id);
