@@ -1,16 +1,23 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9.18-alpine3.18
+# Use Ubuntu as base image
+FROM ubuntu:22.04
 
-# Install Node.js and npm
-RUN apk add --no-cache \
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Node.js, npm, Python and build dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
     nodejs \
     npm \
-    gcc \
-    g++ \
-    make \
-    python3-dev \
-    musl-dev \
-    linux-headers
+    python3 \
+    python3-pip \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and activate virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Set working directory
 WORKDIR /app
@@ -21,11 +28,11 @@ COPY package*.json ./
 # Install Node.js dependencies
 RUN npm install
 
-# Copy Python requirements and install
+# Install Python packages
 COPY src/ai/requirements.txt ./src/ai/
-RUN python -m pip install --no-cache-dir pip==23.0.1 && \
-    cd src/ai && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r src/ai/requirements.txt && \
+    pip list
 
 # Copy the rest of the application
 COPY . .

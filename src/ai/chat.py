@@ -3,12 +3,31 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.chat_models import ChatOllama
 from langchain.prompts import PromptTemplate
 
-import os
 import sys
-import json
-from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.prompts import PromptTemplate
+import pkg_resources
+
+# Print Python version and path
+print(f"Python version: {sys.version}")
+print(f"Python path: {sys.path}")
+
+# Print all installed packages
+print("\nInstalled packages:")
+for pkg in pkg_resources.working_set:
+    print(f"{pkg.key} = {pkg.version}")
+
+try:
+    import langchain
+    print(f"\nlangchain version: {langchain.__version__}")
+except ImportError as e:
+    print(f"\nError importing langchain: {e}")
+
+try:
+    import langchain_community
+    print(f"\nlangchain_community version: {langchain_community.__version__}")
+except ImportError as e:
+    print(f"\nError importing langchain_community: {e}")
+
+print("\nTest completed.")
 
 def debug_imports():
     print("\nDEBUG: Python Environment")
