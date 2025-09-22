@@ -1,12 +1,21 @@
 const { failResponse, successDataResponse } = require("../utils/response");
 const TimeService = require("../services/TimeService");
 const ServiceService = require("../services/ServiceService");
+const redis = require('../config/redis');
 
 const getByServiceTye = async (req, res) => {
     try {
         const { serviceType } = req.params;
 
+        const exists = await redis.exists(`/services/${serviceType.toLowerCase()}`);
+
+        if (exists) {
+            const data = await redis.get(`/services/${serviceType.toLowerCase()}`);
+            return successDataResponse(res, 200, data);
+        }
+
         if (serviceType.toUpperCase()==="CLEANING") {
+            
             const services = await ServiceService.getCleaningService();
 
             const durations = await TimeService.getDuration();
@@ -14,6 +23,7 @@ const getByServiceTye = async (req, res) => {
                 services: services,
                 durations: durations
             }
+            await redis.set(`/services/${serviceType.toLowerCase()}`, result);
             return successDataResponse(res, 200, result);
         }
         else if (serviceType.toUpperCase()==="HEALTHCARE") {
@@ -24,6 +34,7 @@ const getByServiceTye = async (req, res) => {
                 services: services,
                 shifts: shifts
             }
+            await redis.set(`/services/${serviceType.toLowerCase()}`, result);
             return successDataResponse(res, 200, result);
         }
     } catch (err) {

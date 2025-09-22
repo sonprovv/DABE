@@ -1,10 +1,11 @@
 class OrderModel {
-    constructor(uid, workerID, jobID, serviceType, status) {
+    constructor(uid, workerID, jobID, isReview, status, serviceType) {
         this.uid = uid;
         this.workerID = workerID;
         this.jobID = jobID;
-        this.serviceType = serviceType;
+        this.isReview = isReview;
         this.status = status;
+        this.serviceType = serviceType;
     }
 }
 

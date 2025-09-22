@@ -38,7 +38,7 @@ class UserService {
 
             const updatedUser = await userRef.get();
 
-            return updatedUser;
+            return validated;
         } catch (err) {
             console.error(err.message);
             throw new Error("Cập nhật không thành công")

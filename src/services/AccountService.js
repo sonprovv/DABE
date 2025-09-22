@@ -11,9 +11,7 @@ class AccountService {
                 throw new Error("Tài khoản không tồn tại")
             }
 
-            const accountData = accountDoc.data();
-
-            return accountData;
+            return { uid: accountDoc.id, ...accountDoc.data() };
         } catch (err) {
             console.error(err);
             throw new Error("Không tìm thấy tài khoản")

@@ -5,6 +5,7 @@ const { failResponse, successDataResponse } = require("../utils/response");
 const { CleaningJobCreateValid, HealthcareJobCreateValid } = require("../utils/validator/JobValid");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
 const { Timestamp } = require('../config/firebase');
+const redis = require('../config/redis');
 
 dayjs.extend(customParseFormat);
 
@@ -49,7 +50,7 @@ const createJob = async (req, res) => {
             validated['startTime'] = startTime;
             validated['endTime'] = endTime;
             validated['createdAt'] = formatDate(newJob.createdAt);
-
+            await redis.set(`/jobs/${serviceType}/${uidNewJob}`, validated);
             return successDataResponse(res, 200, validated, 'newJob');
         }
         else if (serviceType.toUpperCase()==="HEALTHCARE") {
@@ -91,9 +92,42 @@ const createJob = async (req, res) => {
             validated['startTime'] = startTime;
             validated['endTime'] = endTime;
             validated['createdAt'] = formatDate(newJob.createdAt);
-
+            await redis.set(`/jobs/${serviceType}/${uidNewJob}`, validated);
             return successDataResponse(res, 200, validated, 'newJob');
         }
+    } catch (err) {
+        console.log(err.message);
+        return failResponse(res, 400, err.message);
+    }
+}
+
+const getByUID = async (req, res) => {
+    try {
+        const { jobID, serviceType } = req.params;
+
+        const exists = await redis.exists(`/jobs/${serviceType.toLowerCase()}/${jobID}`);
+
+        if (exists) {
+            const data = await redis.get(`/jobs/${serviceType.toLowerCase()}/${jobID}`);
+            return successDataResponse(res, 200, data, 'job');
+        }
+
+        const job = await JobService.getByUID(jobID, serviceType.toUpperCase());
+        await redis.set(`/jobs/${serviceType.toLowerCase()}/${jobID}`, job);
+        return successDataResponse(res, 200, job, 'job');
+    } catch (err) {
+        console.log(err.message);
+        return failResponse(res, 400, err.message);
+    }
+}
+
+const getJobsByUserID = async (req, res) => {
+    try {
+        const { userID } = req.params;
+
+        const jobs = await JobService.getJobsByUserID(userID);
+
+        return successDataResponse(res, 200, jobs, 'jobs');
     } catch (err) {
         console.log(err.message);
         return failResponse(res, 400, err.message);
@@ -104,7 +138,7 @@ const getJobsByServiceType = async (req, res) => {
     try {
         const { serviceType } = req.params;
 
-        if (serviceType.toUpperCase()==="CLEANING") {
+        if (serviceType.toUpperCase()==='CLEANING') {
             const jobs = await JobService.getCleaningJobs(); 
             return successDataResponse(res, 200, jobs, 'jobs');
         }
@@ -118,21 +152,9 @@ const getJobsByServiceType = async (req, res) => {
     }
 }
 
-const getJobsByUserID = async (req, res) => {
-    try {
-        const { userID } = req.params;
-
-        const jobs = await JobService.getJobsByUserID(userID);
-
-        successDataResponse(res, 200, jobs, 'jobs');
-    } catch (err) {
-        console.log(err.message);
-        failResponse(res, 400, err.message);
-    }
-}
-
 module.exports = {
     createJob,
+    getByUID,
+    getJobsByUserID,
     getJobsByServiceType,
-    getJobsByUserID
 }

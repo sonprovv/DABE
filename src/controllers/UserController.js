@@ -24,14 +24,11 @@ const getUser = async (account) => {
     let currentUser;
     if (account.role==='user' || account.role==='admin') {
         const user = await UserService.getByUID(account.uid);
-        // Ensure dob is a string (convert Date to ISO string if it's a Date object)
-        const formattedDob = user.dob ? (user.dob.toDate ? user.dob.toDate().toISOString().split('T')[0] : user.dob) : null;
-        
         currentUser = new UserModel(
             account.uid,
             user.username,
             user.gender,
-            formattedDob, // Use the formatted date string
+            user.dob,
             user.avatar,
             user.tel,
             user.location,
@@ -42,14 +39,11 @@ const getUser = async (account) => {
     }
     else if (account.role==='worker') {
         const user = await WorkerService.getByUID(account.uid);
-        // Ensure dob is a string (convert Date to ISO string if it's a Date object)
-        const formattedDob = user.dob ? (user.dob.toDate ? user.dob.toDate().toISOString().split('T')[0] : user.dob) : null;
-        
         currentUser = new WorkerModel(
             account.uid,
             user.username,
             user.gender,
-            formattedDob, // Use the formatted date string
+            user.dob,
             user.avatar,
             user.tel,
             user.location,
@@ -63,23 +57,19 @@ const getUser = async (account) => {
 
 const getMe = async (req, res) => {
     try {
-        // Get the token from the Authorization header
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return failResponse(res, 401, 'No token provided');
-        }
+        const { email, password } = req.body;
+        const response = await axios.post(
+            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FB_API_KEY}`,
+            { email, password, returnSecureToken: true }
+        );
 
-        // Verify the token
+        const token = response.data.idToken;
         const decoded = await auth.verifyIdToken(token);
+
         const uid = decoded.uid;
 
-        // Get user account and data
         const account = await AccountService.getByUID(uid);
-        if (!account) {
-            return failResponse(res, 404, 'User not found');
-        }
-        
-        const currentUser = await getUser(account);
+        const currentUser = await getUser(account)
 
         return successDataResponse(res, 200, {
             user: currentUser,
@@ -129,11 +119,9 @@ const loginWithGG = async (req, res) => {
             currentAccount = newAccount;
         }
 
-        console.log("Current account: ", currentAccount);
-
         let currentUser;
         if (userDoc.exists) {
-            currentUser = { uid: userDoc.id, ...userDoc.data() };
+            currentUser = await getUser(currentAccount);
         } else {
             const rawUser = {
                 uid: uid,
@@ -142,7 +130,7 @@ const loginWithGG = async (req, res) => {
             }
 
             let validated;
-            if (role=='user') {
+            if (role==='user') {
                 validated = await UserValid.validateAsync(rawUser, { stripUnknown: true });
                 await UserService.createUser(validated);
             }
@@ -153,8 +141,6 @@ const loginWithGG = async (req, res) => {
 
             currentUser = await getUser(currentAccount);
         }
-
-        console.log("Current user: ", currentUser);
 
         return successDataResponse(res, 200, {
             user: currentUser,
