@@ -39,7 +39,7 @@ const getUser = async (account) => {
         )
         return currentUser.getInfo();
     }
-    if (account.role==='admin') {
+    else if (account.role==='admin') {
         const user = await AdminService.getByUID(account.uid);
         currentUser = new AdminModel(
             account.uid,
