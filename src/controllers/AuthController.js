@@ -22,6 +22,8 @@ const checkEmailExists = async (email) => {
 }
 
 const getUser = async (account) => {
+
+    console.log(account);
     let currentUser;
     if (account.role==='user') {
         const user = await UserService.getByUID(account.uid);
