@@ -11,11 +11,15 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     python3-venv \
+    python-is-python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 20.x
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs
+
+# Install Ollama CLI
+RUN curl -fsSL https://ollama.com/install.sh | sh
 
 # Create and activate virtual environment
 ENV VIRTUAL_ENV=/opt/venv
@@ -46,5 +50,8 @@ RUN mkdir -p src/chroma_db
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# Make start script executable
+RUN chmod +x start.sh
+
+# Start the application via start.sh (starts Ollama then Node)
+CMD ["/bin/bash", "start.sh"]
