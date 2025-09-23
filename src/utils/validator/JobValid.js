@@ -43,10 +43,10 @@ const MaintenanceJobValid = JobValid.keys({
             powers: Joi.array().items(
                 Joi.object({
                     powerName: Joi.string().required(),
-                    quantity: Joi.number().required()
+                    quantity: Joi.number().required(),
+                    quantityMaintenance: Joi.number().required(),
                 })
             ),
-            isMaintenance: Joi.boolean().required(),
             maintenance: Joi.string().required()
         })
     )
