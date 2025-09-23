@@ -126,6 +126,34 @@ class JobService {
         })
     }
 
+    async getPrice(uid, serviceType) {
+        try {
+            const db_name = `${serviceType.toLowerCase()}Jobs`;
+            const jobDoc = await db.collection(db_name).doc(uid).get();
+
+            if (!jobDoc.exists) throw new Error("Lỗi không lấy được mức lương");
+
+            const price = jobDoc.data().price * 0.9;
+
+            return serviceType==='HEALTHCARE' ? price/jobDoc.data().workerQuantity : price;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không lấy được mức lương")
+        }
+    }
+
+    async getByUID(uid, serviceType) {
+        try {
+            const db_name = `${serviceType.toLowerCase()}Jobs`;
+            const jobDoc = await db.collection(db_name).doc(uid).get();
+
+            return await this.getJob(uid, jobDoc.data());
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không thành công")
+        }
+    }
+
     async getJobNew() {
         try {
             const now = new Date();
@@ -151,30 +179,6 @@ class JobService {
         } catch (err) {
             console.log(err.message);
             throw new Error("Không thành công");
-        }
-    }
-
-    async getByUID(uid, serviceType) {
-        try {
-            if (serviceType.toUpperCase()==='CLEANING') {
-                const jobDoc = await db.collection('cleaningJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            else if (serviceType.toUpperCase()==='HEALTHCARE') {
-                const jobDoc = await db.collection('healthcareJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            else if (serviceType.toUpperCase()==='MAINTENANCE') {
-                const jobDoc = await db.collection('maintenanceJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            throw new Error("Danh mục không tồn tại")
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Không thành công")
         }
     }
 

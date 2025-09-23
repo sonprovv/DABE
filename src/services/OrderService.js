@@ -39,8 +39,10 @@ class OrderService {
                 const tmp = {
                     uid: doc.id,
                     job: jobDoc,
-                    isReview: doc.data().isReview,
                     status: doc.data().status,
+                    isReview: doc.data().isReview,
+                    isPayment: doc.data().isPayment,
+                    price: doc.data().price,
                     createdAt: doc.data().createdAt,
                     serviceType: doc.data().serviceType,
                 }
@@ -73,10 +75,12 @@ class OrderService {
                 const tmp = {
                     uid: doc.id,
                     worker: workerDoc,
-                    isReview: doc.data().isReview,
                     status: doc.data().status,
+                    isReview: doc.data().isReview,
+                    isPayment: doc.data().isPayment,
+                    price: doc.data().price,
                     createdAt: doc.data().createdAt,
-                    serviceType: doc.data().serviceType
+                    serviceType: doc.data().serviceType,
                 }
 
                 if (tmp.isReview) {

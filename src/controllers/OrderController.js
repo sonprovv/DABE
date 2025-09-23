@@ -24,7 +24,9 @@ const createOrder = async (req, res) => {
             return failResponse(res, 500, 'Bạn đã ứng tuyển vào công việc này!')
         }
 
-        
+        const price = await JobService.getPrice(validated.jobID, validated.serviceType);
+        validated['price'] = price;
+        validated['isPayment'] = false;
 
         await OrderService.createOrder(validated);
         return successResponse(res, 200, 'Thành công')
