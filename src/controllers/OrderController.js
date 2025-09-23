@@ -36,6 +36,17 @@ const createOrder = async (req, res) => {
     }
 }
 
+const getOrders = async (req, res) => {
+    try {
+        const orders = await OrderService.getOrders();
+
+        return successDataResponse(res, 200, orders, 'orders');
+    } catch (err) {
+        console.log(err.message);
+        return failResponse(res, 500, err.message)
+    }
+}
+
 const getOrdersByWorkerID = async (req, res) => {
     try {
         const { workerID } = req.params;
@@ -84,7 +95,8 @@ const putStatusByUID = async (req, res) => {
 
 module.exports = {
     createOrder,
-    putStatusByUID,
+    getOrders,
     getOrdersByWorkerID,
-    getOrdersByJobID
+    getOrdersByJobID,
+    putStatusByUID,
 };

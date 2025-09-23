@@ -5,10 +5,12 @@ const UserService = require("../services/UserService");
 const AccountService = require("../services/AccountService");
 const WorkerService = require("../services/WorkerService");
 const { failResponse, successDataResponse } = require("../utils/response");
-const { UserValid, WorkerValid } = require("../utils/validator/UserValid");
+const { UserValid, WorkerValid, AdminValid } = require("../utils/validator/UserValid");
 const { auth, db } = require("../config/firebase");
 const { default: axios } = require("axios");
 const dotenv = require('dotenv');
+const AdminService = require("../services/AdminService");
+const AdminModel = require("../models/AdminModel");
 dotenv.config();
 
 const checkEmailExists = async (email) => {
@@ -21,9 +23,25 @@ const checkEmailExists = async (email) => {
 
 const getUser = async (account) => {
     let currentUser;
-    if (account.role==='user' || account.role==='admin') {
+    if (account.role==='user') {
         const user = await UserService.getByUID(account.uid);
         currentUser = new UserModel(
+            account.uid,
+            user.username,
+            user.gender,
+            user.dob,
+            user.avatar,
+            user.tel,
+            user.location,
+            account.email,
+            account.role,
+            account.provider
+        )
+        return currentUser.getInfo();
+    }
+    if (account.role==='admin') {
+        const user = await AdminService.getByUID(account.uid);
+        currentUser = new AdminModel(
             account.uid,
             user.username,
             user.gender,
@@ -157,7 +175,10 @@ const loginWithGG = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
-        const { email, password, username, avatar, role } = req.body;
+        const { email, password, confirmPassword, role } = req.body;
+
+        if (password.length < 6 || password.length > 10) throw new Error('Mật khẩu từ 6-10 ký tự');
+        if (password!==confirmPassword) throw new Error('Mật khẩu không trùng khớp');
 
         const authAccount = await auth.createUser({
             email,
@@ -180,15 +201,17 @@ const createUser = async (req, res) => {
 
         const rawUser = {
             uid: authAccount.uid,
-            avatar: avatar ? avatar : 'https://res.cloudinary.com/dvofgx21o/image/upload/v1754337546/jobs/byhangkho4twacw1owri.png',
-            username: username ? username : authAccount.email.split('@')[0]
+            username: authAccount.email.split('@')[0]
         }
         
         const account = await AccountService.createAccount(newAccount);
         if (role=='user') {
             const validated = await UserValid.validateAsync(rawUser, { stripUnknown: true });
             await UserService.createUser(validated);
-            
+        }
+        if (role=='admin') {
+            const validated = await AdminValid.validateAsync(rawUser, { stripUnknown: true });
+            await AdminService.createAdmin(validated);
         }
         else {
             const validated = await WorkerValid.validateAsync(rawUser, { stripUnknown: true });
@@ -205,7 +228,7 @@ const createUser = async (req, res) => {
 
     } catch (err) {
         console.log(err);
-        return failResponse(res, 500, "Đăng ký thất bại")
+        return failResponse(res, 500, err.message)
     }
 }
 

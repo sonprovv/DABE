@@ -8,7 +8,7 @@ router.put('/forgot-password', forgotPassword);
 
 router.put('/change-password', verifyToken, changePassword);
 
-router.put('/update', verifyToken, updateUser);
+router.put('/update', verifyToken, checkPermission(['user', 'worker']), updateUser);
 
 // router.delete('/delete', verifyToken, checkPermission(['admin']), deleteUser);
 

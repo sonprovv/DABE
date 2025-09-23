@@ -29,6 +29,22 @@ class OrderService {
         return false;
     }
 
+    async getOrders() {
+        try {
+            const snapshot = await db.collection('orders').get();
+
+            const orders = [];
+            snapshot.docs.map(doc => {
+                orders.push({ uid: doc.id, ...doc.data() });
+            })
+
+            return orders;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Get order không thành công")
+        }
+    }
+
     async getOrdersByWorkerID(workerID) {
         try {
             const snapshot = await db.collection('orders').where('workerID', '==', workerID).get();

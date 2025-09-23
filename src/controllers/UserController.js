@@ -44,11 +44,6 @@ const updateUser = async (req, res) => {
     try {
         const rawData = req.body;
 
-        const allowedRoles = ['user', 'worker'];
-        if (!allowedRoles.includes(req.body.role)) {
-            return failResponse(res, 500, "Role không hợp lệ");
-        }
-
         let userData;
         if (req.body.role==='user') {
             const validated = await UserValid.validateAsync(rawData, { stripUnknown: true });
@@ -67,26 +62,7 @@ const updateUser = async (req, res) => {
 }
 
 const deleteUser = async (req, res) => {
-    try {
-        const rawData = req.body;
 
-        const allowedRoles = ['user', 'worker'];
-        if (!allowedRoles.includes(req.body.role)) {
-            return failResponse(res, 500, "Role không hợp lệ");
-        }
-
-        if (req.body.role==='user') {
-            const validated = await UserInfoValid.validateAsync(rawData, { stripUnknown: true });
-            await UserService.deleteUser(validated.uid);
-        }
-        else {
-            const validated = await WorkerInfoValid.validateAsync(rawData, { stripUnknown: true });
-            await WorkerService.deleteUser(validated.uid);
-        }
-        return successResponse(res, 200, "Xóa người dùng thành công")
-    } catch (err) {
-        return failResponse(res, 500, err.message)
-    }
 }
 
 module.exports = {

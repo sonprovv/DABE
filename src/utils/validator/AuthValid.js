@@ -36,4 +36,5 @@ const ForgotPasswordValid = ChangePasswordValid.keys({
     }),
 })
 
+
 module.exports = { AuthValid, ChangePasswordValid, ForgotPasswordValid };

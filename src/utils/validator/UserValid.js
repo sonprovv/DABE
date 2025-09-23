@@ -10,6 +10,8 @@ const UserValid = Joi.object({
     location: Joi.string().default('Chưa cập nhật'),
 })
 
+const AdminValid = UserValid;
+
 const WorkerValid = UserValid.keys({
     description: Joi.string().default('Chưa cập nhật')
 })
@@ -31,6 +33,7 @@ const WorkerInfoValid = UserInfoValid.keys({
 
 module.exports = { 
     UserValid, 
+    AdminValid,
     WorkerValid,
     UserInfoValid,
     WorkerInfoValid
