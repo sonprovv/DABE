@@ -22,8 +22,6 @@ class AdminService {
         const {uid, ...data} = validated;
         try {
             await db.collection('admins').doc(uid).set(data);
-
-            return validated;
         } catch (err) {
             console.error(err.message);
             throw new Error("Đăng ký không thành công")

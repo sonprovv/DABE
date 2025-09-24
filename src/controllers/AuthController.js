@@ -11,6 +11,7 @@ const { default: axios } = require("axios");
 const dotenv = require('dotenv');
 const AdminService = require("../services/AdminService");
 const AdminModel = require("../models/AdminModel");
+const { OAuth2Client } = require('google-auth-library');
 dotenv.config();
 
 const checkEmailExists = async (email) => {
@@ -102,12 +103,34 @@ const getMe = async (req, res) => {
     }
 }
 
+async function signInWithGoogle(googleIdToken) {
+  const apiKey = process.env.FB_API_KEY; // lấy từ Firebase Console → Project Settings → Web API Key
+  const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${apiKey}`;
+
+  const body = {
+    postBody: `id_token=${googleIdToken}&providerId=google.com`,
+    requestUri: 'http://localhost', // bắt buộc nhưng không dùng
+    returnIdpCredential: true,
+    returnSecureToken: true
+  };
+
+  const response = await axios.post(url, body);
+  return response.data; // chứa idToken, refreshToken, expiresIn, localId...
+}
+
 const loginWithGG = async (req, res) => {
-    const { token, role } = req.body;
+    const { idToken, role } = req.body;
 
     try {
-        const decodedToken = await auth.verifyIdToken(token);
-        let { uid, email, name, picture } = decodedToken;
+        // const decodedToken = await auth.verifyIdToken(idToken);
+        // let { uid, email, name, picture } = decodedToken;
+
+        
+
+        const firebaseAuthData = await signInWithGoogle(idToken);
+
+        const uid = firebaseAuthData.localId;
+        const { email, fullname, photoUrl } = firebaseAuthData;
 
         const emailExists = await checkEmailExists(email);
         if (emailExists) {
@@ -150,8 +173,8 @@ const loginWithGG = async (req, res) => {
         } else {
             const rawClient = {
                 uid: uid,
-                avatar: picture ? picture : 'https://res.cloudinary.com/dvofgx21o/image/upload/v1754337546/jobs/byhangkho4twacw1owri.png',
-                username: name ? name : email.split('@')[0]
+                avatar: photoUrl ? photoUrl : 'https://res.cloudinary.com/dvofgx21o/image/upload/v1754337546/jobs/byhangkho4twacw1owri.png',
+                username: fullname ? fullname : email.split('@')[0]
             }
 
             let validated;
@@ -170,18 +193,10 @@ const loginWithGG = async (req, res) => {
 
             currentClient = await getClient(currentAccount);
         }
-
-        const response = await axios.post(
-            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FB_API_KEY}`,
-            { email, password, returnSecureToken: true }
-        );
-
-        const { idToken, refreshToken } = response.data;
-
         return successDataResponse(res, 200, {
             user: currentClient,
-            token: idToken,
-            refreshToken: refreshToken
+            token: firebaseAuthData.idToken,
+            refreshToken: firebaseAuthData.refreshToken
         })
     } catch (err) {
         console.log(err.message);

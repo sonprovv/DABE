@@ -22,8 +22,6 @@ class UserService {
         const {uid, ...data} = validated;
         try {
             await db.collection('users').doc(uid).set(data);
-
-            return validated;
         } catch (err) {
             console.error(err.message);
             throw new Error("Đăng ký không thành công")
