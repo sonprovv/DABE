@@ -142,7 +142,7 @@ const loginWithGG = async (req, res) => {
         let clientDoc;
         if (role=='user') clientDoc = await db.collection('users').doc(uid).get();
         else if (role=='admin') clientDoc = await db.collection('admins').doc(uid).get();
-        else if (role==='worker') clientDoc = await db.collection('worker').doc(uid).get();
+        else if (role==='worker') clientDoc = await db.collection('workers').doc(uid).get();
 
         let currentClient;
         if (clientDoc.exists) {
@@ -167,6 +167,8 @@ const loginWithGG = async (req, res) => {
                 validated = await WorkerValid.validateAsync(rawClient, { stripUnknown: true });
                 await WorkerService.createWorker(validated);
             } 
+
+            currentClient = await getClient(currentAccount);
         }
 
         const response = await axios.post(
