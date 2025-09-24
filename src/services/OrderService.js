@@ -34,9 +34,33 @@ class OrderService {
             const snapshot = await db.collection('orders').get();
 
             const orders = [];
-            snapshot.docs.map(doc => {
-                orders.push({ uid: doc.id, ...doc.data() });
-            })
+            await Promise.all(snapshot.docs.map(async (doc) => {
+                try {
+                    const [ jobDoc, workerDoc ] = await Promise.all([
+                        JobService.getByUID(doc.data().jobID, doc.data().serviceType),
+                        WorkerService.getByUID(doc.data().workerID)
+                    ])
+
+                    const accountDoc = await AccountService.getByUID(workerDoc.uid);
+                    workerDoc['email'] = accountDoc.email;
+                    workerDoc['role'] = accountDoc.role;
+                    workerDoc['dob'] = formatDate(typeof workerDoc.dob.toDate==='function' ? workerDoc.dob.toDate() : workerDoc.dob)
+                    const order = {
+                        uid: doc.id,
+                        jobID: doc.data().jobID,
+                        worker: workerDoc,
+                        user: jobDoc.user,
+                        status: doc.data().status,
+                        price: doc.data().price,
+                        isPayment: doc.data().isPayment
+                    }
+
+                    orders.push(order);
+                } catch (err) {
+                    console.log(err.message);
+                    return;
+                }
+            }))
 
             return orders;
         } catch (err) {

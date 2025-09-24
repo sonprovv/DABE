@@ -21,56 +21,56 @@ const checkEmailExists = async (email) => {
     return !snapshot.empty;
 }
 
-const getUser = async (account) => {
-    let currentUser;
+const getClient = async (account) => {
+    let currentClient;
     if (account.role==='user') {
-        const user = await UserService.getByUID(account.uid);
-        currentUser = new UserModel(
+        const client = await UserService.getByUID(account.uid);
+        currentClient = new UserModel(
             account.uid,
-            user.username,
-            user.gender,
-            user.dob,
-            user.avatar,
-            user.tel,
-            user.location,
+            client.username,
+            client.gender,
+            client.dob,
+            client.avatar,
+            client.tel,
+            client.location,
             account.email,
             account.role,
             account.provider
         )
-        return currentUser.getInfo();
+        return currentClient.getInfo();
     }
     else if (account.role==='admin') {
-        const user = await AdminService.getByUID(account.uid);
-        currentUser = new AdminModel(
+        const client = await AdminService.getByUID(account.uid);
+        currentClient = new AdminModel(
             account.uid,
-            user.username,
-            user.gender,
-            user.dob,
-            user.avatar,
-            user.tel,
-            user.location,
+            client.username,
+            client.gender,
+            client.dob,
+            client.avatar,
+            client.tel,
+            client.location,
             account.email,
             account.role,
             account.provider
         )
-        return currentUser.getInfo();
+        return currentClient.getInfo();
     }
     else if (account.role==='worker') {
-        const user = await WorkerService.getByUID(account.uid);
-        currentUser = new WorkerModel(
+        const client = await WorkerService.getByUID(account.uid);
+        currentClient = new WorkerModel(
             account.uid,
-            user.username,
-            user.gender,
-            user.dob,
-            user.avatar,
-            user.tel,
-            user.location,
+            client.username,
+            client.gender,
+            client.dob,
+            client.avatar,
+            client.tel,
+            client.location,
             account.email,
             account.role,
             account.provider,
-            user.description
+            client.description
         )
-        return currentUser.getInfo();
+        return currentClient.getInfo();
     }
 }
 
@@ -89,10 +89,10 @@ const getMe = async (req, res) => {
         const uid = decoded.uid;
 
         const account = await AccountService.getByUID(uid);
-        const currentUser = await getUser(account)
+        const currentClient = await getClient(account)
 
         return successDataResponse(res, 200, {
-            user: currentUser,
+            user: currentClient,
             token: idToken,
             refreshToken: refreshToken
         })
@@ -103,10 +103,10 @@ const getMe = async (req, res) => {
 }
 
 const loginWithGG = async (req, res) => {
-    const { idToken, role } = req.body;
+    const { token, role } = req.body;
 
     try {
-        const decodedToken = await auth.verifyIdToken(idToken);
+        const decodedToken = await auth.verifyIdToken(token);
         let { uid, email, name, picture } = decodedToken;
 
         const emailExists = await checkEmailExists(email);
@@ -122,7 +122,6 @@ const loginWithGG = async (req, res) => {
             }
         }
 
-        const userDoc = await db.collection('users').doc(uid).get();
         const accountDoc = await db.collection('accounts').doc(uid).get();
 
         let currentAccount;
@@ -140,11 +139,16 @@ const loginWithGG = async (req, res) => {
             currentAccount = newAccount;
         }
 
-        let currentUser;
-        if (userDoc.exists) {
-            currentUser = await getUser(currentAccount);
+        let clientDoc;
+        if (role=='user') clientDoc = await db.collection('users').doc(uid).get();
+        else if (role=='admin') clientDoc = await db.collection('admins').doc(uid).get();
+        else if (role==='worker') clientDoc = await db.collection('worker').doc(uid).get();
+
+        let currentClient;
+        if (clientDoc.exists) {
+            currentClient = await getClient(currentAccount);
         } else {
-            const rawUser = {
+            const rawClient = {
                 uid: uid,
                 avatar: picture ? picture : 'https://res.cloudinary.com/dvofgx21o/image/upload/v1754337546/jobs/byhangkho4twacw1owri.png',
                 username: name ? name : email.split('@')[0]
@@ -152,20 +156,30 @@ const loginWithGG = async (req, res) => {
 
             let validated;
             if (role==='user') {
-                validated = await UserValid.validateAsync(rawUser, { stripUnknown: true });
+                validated = await UserValid.validateAsync(rawClient, { stripUnknown: true });
                 await UserService.createUser(validated);
             }
+            else if (role==='admin') {
+                validated = await AdminValid.validateAsync(rawClient, { stripUnknown: true });
+                await AdminService.createAdmin(validated);
+            }
             else {
-                validated = await WorkerValid.validateAsync(rawUser, { stripUnknown: true });
+                validated = await WorkerValid.validateAsync(rawClient, { stripUnknown: true });
                 await WorkerService.createWorker(validated);
             } 
-
-            currentUser = await getUser(currentAccount);
         }
 
+        const response = await axios.post(
+            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FB_API_KEY}`,
+            { email, password, returnSecureToken: true }
+        );
+
+        const { idToken, refreshToken } = response.data;
+
         return successDataResponse(res, 200, {
-            user: currentUser,
-            token: idToken
+            user: currentClient,
+            token: idToken,
+            refreshToken: refreshToken
         })
     } catch (err) {
         console.log(err.message);
@@ -199,29 +213,29 @@ const createUser = async (req, res) => {
             'normal'
         );
 
-        const rawUser = {
+        const rawClient = {
             uid: authAccount.uid,
             username: authAccount.email.split('@')[0]
         }
         
         const account = await AccountService.createAccount(newAccount);
         if (role=='user') {
-            const validated = await UserValid.validateAsync(rawUser, { stripUnknown: true });
+            const validated = await UserValid.validateAsync(rawClient, { stripUnknown: true });
             await UserService.createUser(validated);
         }
         if (role=='admin') {
-            const validated = await AdminValid.validateAsync(rawUser, { stripUnknown: true });
+            const validated = await AdminValid.validateAsync(rawClient, { stripUnknown: true });
             await AdminService.createAdmin(validated);
         }
         else {
-            const validated = await WorkerValid.validateAsync(rawUser, { stripUnknown: true });
+            const validated = await WorkerValid.validateAsync(rawClient, { stripUnknown: true });
             await WorkerService.createWorker(validated);
         } 
 
-        const currentUser = await getUser(account);
+        const currentClient = await getClient(account);
 
         return successDataResponse(res, 200, {
-            user: currentUser,
+            user: currentClient,
             token: idToken,
             refreshToken: refreshToken
         })
