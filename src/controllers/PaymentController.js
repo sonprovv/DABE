@@ -10,6 +10,7 @@ const checkPayment = async (req, res) => {
         return failResponse(res, 401, 'Không thành công');
     }
     else {
+        console.log(req.body)
         console.log('in');
         return successResponse(res, 200, 'Thành công');
     }
