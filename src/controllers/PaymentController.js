@@ -11,7 +11,7 @@ const checkPayment = async (req, res) => {
     }
     else {
         console.log(req.body);
-        console.log(req.body.description.split('.')[1]);
+        console.log(req.body.description.split('.')[3]);
         return successResponse(res, 200, 'Thành công');
     }
 }
