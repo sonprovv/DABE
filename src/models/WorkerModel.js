@@ -1,8 +1,10 @@
 const UserModel = require("./UserModel");
 
 class WorkerModel extends UserModel {
-    constructor(uid, username, gender, dob, avatar, tel, location, email, role, provider, description) {
+    constructor(uid, username, gender, dob, avatar, tel, location, email, role, provider, bankName, bankNumber, description) {
         super(uid, username, gender, dob, avatar, tel, location, email, role, provider);
+        this.bankName = bankName;
+        this.bankNumber = bankNumber;
         this.description = description;
     }
 
@@ -18,6 +20,8 @@ class WorkerModel extends UserModel {
             location: this.location,
             role: this.role,
             provider: this.provider,
+            bankName: this.bankName,
+            bankNumber: this.bankNumber,
             description: this.description
         }
     }
