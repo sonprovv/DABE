@@ -42,6 +42,9 @@ app.use('/api/devices', DeviceRouter);
 const NotificationRouter = require('./src/routes/NotificationRouter');
 app.use('/api/notifications', NotificationRouter);
 
+const PaymentRouter = require('./src/routes/PaymentRouter');
+app.use('/api/payments', PaymentRouter);
+
 const { cleaningJobSchedule, healthcareJobSchedule } = require('./src/notifications/JobNotifications');
 cleaningJobSchedule();
 healthcareJobSchedule();

@@ -104,12 +104,12 @@ const getMe = async (req, res) => {
 }
 
 async function signInWithGoogle(googleIdToken) {
-  const apiKey = process.env.FB_API_KEY; // lấy từ Firebase Console → Project Settings → Web API Key
+  const apiKey = process.env.FB_API_KEY;
   const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${apiKey}`;
 
   const body = {
     postBody: `id_token=${googleIdToken}&providerId=google.com`,
-    requestUri: 'http://localhost', // bắt buộc nhưng không dùng
+    requestUri: 'http://localhost',
     returnIdpCredential: true,
     returnSecureToken: true
   };
@@ -122,11 +122,6 @@ const loginWithGG = async (req, res) => {
     const { idToken, role } = req.body;
 
     try {
-        // const decodedToken = await auth.verifyIdToken(idToken);
-        // let { uid, email, name, picture } = decodedToken;
-
-        
-
         const firebaseAuthData = await signInWithGoogle(idToken);
 
         const uid = firebaseAuthData.localId;
