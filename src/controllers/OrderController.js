@@ -2,7 +2,7 @@ const OrderService = require("../services/OrderService");
 const { failResponse, successResponse, successDataResponse } = require("../utils/response");
 const { OrderCreateValid } = require("../utils/validator/OrderValid");
 
-const { orderStatus } = require("../notifications/OrderNotification");
+const { orderStatusNotification } = require("../notifications/OrderNotification");
 const { formatDateAndTimeNow } = require("../utils/formatDate");
 const JobService = require("../services/JobService");
 
@@ -47,11 +47,11 @@ const getOrders = async (req, res) => {
     }
 }
 
-const getOrdersByWorkerID = async (req, res) => {
+const getOrdersByJobID = async (req, res) => {
     try {
-        const { workerID } = req.params;
+        const { jobID } = req.params;
 
-        const orders = await OrderService.getOrdersByWorkerID(workerID);
+        const orders = await OrderService.getOrdersByJobID(jobID);
 
         return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
@@ -60,11 +60,11 @@ const getOrdersByWorkerID = async (req, res) => {
     }
 }
 
-const getOrdersByJobID = async (req, res) => {
+const getOrdersByWorkerID = async (req, res) => {
     try {
-        const { jobID } = req.params;
+        const { workerID } = req.params;
 
-        const orders = await OrderService.getOrdersByJobID(jobID);
+        const orders = await OrderService.getOrdersByWorkerID(workerID);
 
         return successDataResponse(res, 200, orders, 'orders');
     } catch (err) {
@@ -84,7 +84,7 @@ const putStatusByUID = async (req, res) => {
         const updatedOrder = await OrderService.putStatusByUID(uid, status);
 
         console.log(updatedOrder)
-        await orderStatus(updatedOrder);
+        await orderStatusNotification(updatedOrder);
 
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
     } catch (err) {

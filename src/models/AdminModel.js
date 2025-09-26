@@ -1,26 +1,9 @@
-class AdminModel {
+const UserModel = require("./UserModel");
+
+class AdminModel extends UserModel {
     constructor(uid, username, gender, dob, avatar, tel, location, email, role, provider) {
-        this.uid = uid;
-        this.username = username;
-        this.gender = gender;
-        this.dob = this.formatDate(
-            typeof dob?.toDate === 'function' ? dob.toDate() : dob
-        );
-        this.avatar = avatar;
-        this.email = email;
-        this.tel = tel;
-        this.location = location;
-        this.role = role;
-        this.provider = provider;
-    }
-
-    formatDate = (date) => {
-        const d = new Date(date);
-        const day = d.getDate().toString().padStart(2, '0');
-        const month = (d.getMonth() + 1).toString().padStart(2, '0');
-        const year = d.getFullYear().toString();
-
-        return `${day}/${month}/${year}`;
+        super(uid, username, gender, dob, avatar, tel, location, email, role, provider);
+        this.description = description;
     }
 
     getInfo = () => {

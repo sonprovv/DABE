@@ -8,6 +8,4 @@ router.post('/create', verifyToken, checkPermission(['user']), createReview);
 
 router.get('/worker/:workerID/experience', getExperienceOfWorker);
 
-// router.delete('/:reviewID', d)
-
 module.exports = router;

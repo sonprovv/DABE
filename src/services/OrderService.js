@@ -40,11 +40,7 @@ class OrderService {
                         JobService.getByUID(doc.data().jobID, doc.data().serviceType),
                         WorkerService.getByUID(doc.data().workerID)
                     ])
-
-                    const accountDoc = await AccountService.getByUID(workerDoc.uid);
-                    workerDoc['email'] = accountDoc.email;
-                    workerDoc['role'] = accountDoc.role;
-                    workerDoc['dob'] = formatDate(typeof workerDoc.dob.toDate==='function' ? workerDoc.dob.toDate() : workerDoc.dob)
+                    
                     const order = {
                         uid: doc.id,
                         jobID: doc.data().jobID,

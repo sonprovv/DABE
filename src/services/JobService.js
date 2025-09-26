@@ -209,43 +209,10 @@ class JobService {
         }
     }
 
-    async getCleaningJobs() {
+    async getJobsByServiceType(serviceType) {
         try {
-            const snapshot = await db.collection('cleaningJobs').get();
-
-            const jobs = [];
-
-            await Promise.all(snapshot.docs.map(async (doc) => {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }));
-
-            return jobs;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Lỗi lấy thông tin job")
-        }
-    }
-
-    async getHealthcareJobs() {
-        try {
-            const snapshot = await db.collection('healthcareJobs').get();
-
-            const jobs = [];
-
-            await Promise.all(snapshot.docs.map(async (doc) => {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }));
-
-            return jobs;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Lỗi lấy thông tin job")
-        }
-    }
-
-    async getMaintenanceJobs() {
-        try {
-            const snapshot = await db.collection('maintenanceJobs').get();
+            const db_name = `${serviceType.toLowerCase()}Jobs`;
+            const snapshot = await db.collection(db_name).get();
 
             const jobs = [];
 
@@ -261,19 +228,11 @@ class JobService {
     }
 
     async getJob(uid, data) {
-        const accountDoc = await AccountService.getByUID(data.userID);
         const userDoc = await UserService.getByUID(data.userID);
 
-        const user = {
-            uid: data.userID,
-            ...userDoc,
-            email: accountDoc.email,
-            role: accountDoc.role
-        };
-        user['dob'] = formatDate(typeof user.dob.toDate === 'function' ? user.dob.toDate() : user.dob);
         delete data['userID'];
         data['uid'] = uid;
-        data['user'] = user;
+        data['user'] = userDoc;
         data['createdAt'] = formatDate(data.createdAt.toDate());
 
         if (data.serviceType==='CLEANING') {

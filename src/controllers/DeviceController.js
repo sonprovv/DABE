@@ -3,7 +3,7 @@ const { failResponse, successResponse } = require("../utils/response");
 
 const postFcmToken = async (req, res) => {
     try {
-        const clientID = req.user.uid;
+        const clientID = req.client.uid;
         const { fcmToken } = req.body;
 
         const deviceDoc = await db.collection('devices').doc(clientID).get();
@@ -36,7 +36,7 @@ const postFcmToken = async (req, res) => {
 
 const deleteFcmToken = async (req, res) => {
     try {
-        const clientID = req.user.uid;
+        const clientID = req.client.uid;
         const { fcmToken } = req.body;
 
         const deviceDoc = await db.collection('devices').doc(clientID).get();

@@ -1,4 +1,6 @@
 const { db } = require("../config/firebase");
+const { formatDate } = require("../utils/formatDate");
+const AccountService = require("./AccountService");
 
 class AdminService {
     constructor() {}
@@ -11,7 +13,13 @@ class AdminService {
                 throw new Error("Người dùng không tồn tại")
             }
 
-            return { uid: uid, ...adminDoc.data() };
+            const accountDoc = await AccountService.getByUID(uid);
+            const adminData = adminDoc.data();
+            adminData['dob'] = formatDate(typeof adminData.dob.toDate==='function' ? adminData.dob.toDate() : adminData.dob);
+            adminData['email'] = accountDoc.email;
+            adminData['role'] = accountDoc.role;
+
+            return { uid: uid, ...adminData };
         } catch (err) {
             console.error(err.message);
             throw new Error("Không tìm thấy thông tin")

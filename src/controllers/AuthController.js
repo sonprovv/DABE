@@ -11,7 +11,6 @@ const { default: axios } = require("axios");
 const dotenv = require('dotenv');
 const AdminService = require("../services/AdminService");
 const AdminModel = require("../models/AdminModel");
-const { OAuth2Client } = require('google-auth-library');
 dotenv.config();
 
 const checkEmailExists = async (email) => {
@@ -26,51 +25,17 @@ const getClient = async (account) => {
     let currentClient;
     if (account.role==='user') {
         const client = await UserService.getByUID(account.uid);
-        currentClient = new UserModel(
-            account.uid,
-            client.username,
-            client.gender,
-            client.dob,
-            client.avatar,
-            client.tel,
-            client.location,
-            account.email,
-            account.role,
-            account.provider
-        )
+        currentClient = new UserModel(client)
         return currentClient.getInfo();
     }
     else if (account.role==='admin') {
         const client = await AdminService.getByUID(account.uid);
-        currentClient = new AdminModel(
-            account.uid,
-            client.username,
-            client.gender,
-            client.dob,
-            client.avatar,
-            client.tel,
-            client.location,
-            account.email,
-            account.role,
-            account.provider
-        )
+        currentClient = new AdminModel(client)
         return currentClient.getInfo();
     }
     else if (account.role==='worker') {
         const client = await WorkerService.getByUID(account.uid);
-        currentClient = new WorkerModel(
-            account.uid,
-            client.username,
-            client.gender,
-            client.dob,
-            client.avatar,
-            client.tel,
-            client.location,
-            account.email,
-            account.role,
-            account.provider,
-            client.description
-        )
+        currentClient = new WorkerModel(client)
         return currentClient.getInfo();
     }
 }
@@ -115,7 +80,7 @@ async function signInWithGoogle(googleIdToken) {
   };
 
   const response = await axios.post(url, body);
-  return response.data; // chứa idToken, refreshToken, expiresIn, localId...
+  return response.data;
 }
 
 const loginWithGG = async (req, res) => {
@@ -157,12 +122,9 @@ const loginWithGG = async (req, res) => {
             currentAccount = newAccount;
         }
 
-        let clientDoc;
-        if (role=='user') clientDoc = await db.collection('users').doc(uid).get();
-        else if (role=='admin') clientDoc = await db.collection('admins').doc(uid).get();
-        else if (role==='worker') clientDoc = await db.collection('workers').doc(uid).get();
-
         let currentClient;
+        const clientDoc = clientDoc = await db.collection(`${role}s`).doc(uid).get();
+
         if (clientDoc.exists) {
             currentClient = await getClient(currentAccount);
         } else {
@@ -199,7 +161,7 @@ const loginWithGG = async (req, res) => {
     }
 }
 
-const createUser = async (req, res) => {
+const createClient = async (req, res) => {
     try {
         const { email, password, confirmPassword, role } = req.body;
 
@@ -284,6 +246,6 @@ const refreshIdToken = async (req, res) => {
 module.exports = {
     getMe,
     loginWithGG,
-    createUser,
+    createClient,
     refreshIdToken
 }

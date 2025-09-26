@@ -1,7 +1,8 @@
-const { db, admin } = require("../config/firebase");
+const { db } = require("../config/firebase");
 const JobService = require("../services/JobService");
 const OrderService = require("../services/OrderService");
 const TimeService = require("../services/TimeService");
+const { findDevices } = require("./tool");
 
 let cleaningJobInterval = null, healthcareJobInterval = null;
 
@@ -52,24 +53,6 @@ const getEndTime = async (startTime, uid, serviceType) => {
     return `${hour.toString().padStart(2, '0')}:${minute}`;
 }
 
-const deleteFcmToken = async (response, clientID, devices) => {
-    const tokens = [];
-    console.log(response)
-    for (let i = 0; i < response.responses.length; i++) {
-        const res = response.responses[i];
-        const validToken = devices[i];
-
-        console.log(res.success)
-        console.log(validToken)
-        if (res.success) {
-            tokens.push(validToken);
-        }
-    }
-    await db.collection('devices').doc(clientID).update({
-        devices: tokens
-    })
-}
-
 const findWorkerAndNotify = async (job, notify) => {
     const snapshotOrder = await db.collection("orders").where('jobID', '==', job.uid).get();
     if (snapshotOrder.empty) return;
@@ -90,24 +73,7 @@ const findWorkerAndNotify = async (job, notify) => {
             clientID: workerID
         });
 
-        const deviceDoc = await db.collection('devices').doc(workerID).get();
-        if (!deviceDoc.exists) return;
-
-        const devices = deviceDoc.data().devices;
-        if (!devices || devices.length===0) return;
-
-        const message = {
-            tokens: devices,
-            notification: {
-                title: notify.title,
-                body: notify.content
-            }
-        }        
-        const response = await admin.messaging().sendEachForMulticast(message);
-
-        if (response.failureCount!==0) {
-            deleteFcmToken(response, workerID, devices);
-        }
+        await findDevices(workerID, notify);
     }))
 }
 
@@ -117,26 +83,7 @@ const findUserOfJob = async (userID, notify) => {
         clientID: userID
     });
     
-    const deviceDoc = await db.collection('devices').doc(userID).get();
-    if (!deviceDoc.exists) return;
-
-    const devices = deviceDoc.data().devices;
-    if (!devices || devices.length===0) return; 
-
-    const message = {
-        tokens: devices,
-        notification: {
-            title: notify.title,
-            body: notify.content
-        }
-    }
-    const response = await admin.messaging().sendEachForMulticast(message);
-    // console.log("FCM Response:", response);
-    // await admin.messaging().send(message); with token: device
-    console.log(response);
-    if (response.failureCount!==0) {
-        deleteFcmToken(response, userID, devices);
-    }
+    await findDevices(userID, notify);
 }
 
 const jobSchedule = (serviceType, collectionName, intervalRef) => {
@@ -167,13 +114,14 @@ const jobSchedule = (serviceType, collectionName, intervalRef) => {
             }
 
             const notify = {
+                time: null,
                 jobID: job.uid,
                 title: 'Thông báo công việc',
                 content: '',
-                time: null,
                 isRead: false,
                 serviceType: serviceType,
-                createdAt: new Date()
+                createdAt: new Date(),
+                notificationType: 'Job'
             }
 
             if (job.startTime===time30) {

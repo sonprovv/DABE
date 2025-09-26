@@ -54,28 +54,6 @@ const getByUID = async (req, res) => {
     try {
         const { jobID, serviceType } = req.params;
 
-
-        if (exists) {
-            const account = await AccountService.getByUID(data.userID);
-            const user = await UserService.getByUID(data.userID);
-
-            delete data['userID'];
-            const currentUser = new UserModel(
-                user.uid, 
-                user.username, 
-                user.gender,
-                user.dob,
-                user.avatar,
-                user.tel,
-                user.location,
-                account.email,
-                account.role,
-                account.provider
-            )
-            data['user'] = currentUser.getInfo();
-            return successDataResponse(res, 200, data, 'job');
-        }
-
         const job = await JobService.getByUID(jobID, serviceType.toUpperCase());
         return successDataResponse(res, 200, job, 'job');
     } catch (err) {
@@ -101,18 +79,8 @@ const getJobsByServiceType = async (req, res) => {
     try {
         const { serviceType } = req.params;
 
-        if (serviceType.toUpperCase()==='CLEANING') {
-            const jobs = await JobService.getCleaningJobs(); 
-            return successDataResponse(res, 200, jobs, 'jobs');
-        }
-        else if (serviceType.toUpperCase()==='HEALTHCARE') {
-            const jobs = await JobService.getHealthcareJobs();
-            return successDataResponse(res, 200, jobs, 'jobs');
-        }
-        else if (serviceType.toUpperCase()==='MAINTENANCE') {
-            const jobs = await JobService.getMaintenanceJobs();
-            return successDataResponse(res, 200, jobs, 'jobs');
-        }
+        const jobs = await JobService.getJobsByServiceType(serviceType); 
+        return successDataResponse(res, 200, jobs, 'jobs');
     } catch (err) {
         console.log(err.message);
         return failResponse(res, 500, err.message);

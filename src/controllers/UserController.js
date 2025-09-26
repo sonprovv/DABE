@@ -24,7 +24,7 @@ const forgotPassword = async (req, res) => {
 
 const changePassword = async (req, res) => {
     try {
-        const emailToken = req.user.email;
+        const emailToken = req.client.email;
         const rawData = req.body;
         const validated = await ChangePasswordValid.validateAsync({email: emailToken, ...rawData}, { stripUnknown: true });
 

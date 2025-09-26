@@ -38,11 +38,7 @@ class ReviewService {
             const snapshot = await db.collection('reviews').where('workerID', '==', workerID).get();
 
             for (const doc of snapshot.docs) {
-                const accountDoc = await AccountService.getByUID(doc.data().userID);
                 const userDoc = await UserService.getByUID(doc.data().userID);
-                userDoc['email'] = accountDoc.email;
-                userDoc['role'] = accountDoc.role;
-                userDoc['dob'] = formatDate(userDoc['dob'].toDate())
 
                 const review = {
                     uid: doc.id,

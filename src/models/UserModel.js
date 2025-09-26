@@ -1,26 +1,16 @@
 class UserModel {
-    constructor(uid, username, gender, dob, avatar, tel, location, email, role, provider) {
-        this.uid = uid;
-        this.username = username;
-        this.gender = gender;
-        this.dob = this.formatDate(
-            typeof dob?.toDate === 'function' ? dob.toDate() : dob
-        );
-        this.avatar = avatar;
-        this.email = email;
-        this.tel = tel;
-        this.location = location;
-        this.role = role;
-        this.provider = provider;
-    }
 
-    formatDate = (date) => {
-        const d = new Date(date);
-        const day = d.getDate().toString().padStart(2, '0');
-        const month = (d.getMonth() + 1).toString().padStart(2, '0');
-        const year = d.getFullYear().toString();
-
-        return `${day}/${month}/${year}`;
+    constructor(data) {
+        this.uid = data.uid;
+        this.username = data.username;
+        this.gender = data.gender;
+        this.dob = data.dob
+        this.avatar = data.avatar;
+        this.email = data.email;
+        this.tel = data.tel;
+        this.location = data.location;
+        this.role = data.role;
+        this.provider = data.provider;
     }
 
     getInfo = () => {
