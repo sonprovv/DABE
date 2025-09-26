@@ -3,7 +3,6 @@ const UserModel = require("./UserModel");
 class AdminModel extends UserModel {
     constructor(uid, username, gender, dob, avatar, tel, location, email, role, provider) {
         super(uid, username, gender, dob, avatar, tel, location, email, role, provider);
-        this.description = description;
     }
 
     getInfo = () => {

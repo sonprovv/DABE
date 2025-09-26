@@ -239,7 +239,7 @@ const refreshIdToken = async (req, res) => {
         })
     } catch (err) {
         console.log(err);
-        return failResponse(res, 500, "Lấy lại token thất bại")
+        return failResponse(res, 400, "Lấy lại token thất bại")
     }
 }
 
