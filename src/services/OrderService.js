@@ -29,6 +29,16 @@ class OrderService {
         return false;
     }
 
+    async updatePayment(workerID, jobID) {
+        const snapshot = await db.collection('orders').where('workerID', '==', workerID).where('jobID', '==', jobID).get();
+        if (snapshot.empty) throw new Error('Không tồn tại order');
+        const order = snapshot.docs[1];
+
+        await db.collection('orders').doc(order.id).update({
+            isPayment: true
+        })
+    }
+
     async getOrders() {
         try {
             const snapshot = await db.collection('orders').get();
