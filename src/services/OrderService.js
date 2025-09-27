@@ -1,5 +1,5 @@
 const { db } = require("../config/firebase");
-const { formatDate } = require("../utils/formatDate");
+const { formatDate, formatDateAndTime, formatDateAndTimeNow } = require("../utils/formatDate");
 const AccountService = require("./AccountService");
 const JobService = require("./JobService");
 const ReviewService = require("./ReviewService");
@@ -46,9 +46,12 @@ class OrderService {
                         jobID: doc.data().jobID,
                         worker: workerDoc,
                         user: jobDoc.user,
-                        status: doc.data().status,
                         price: doc.data().price,
-                        isPayment: doc.data().isPayment
+                        status: doc.data().status,
+                        isReview: doc.data().isReview,
+                        isPayment: doc.data().isPayment,
+                        serviceType: doc.data().serviceType,
+                        createdAt: formatDateAndTime(doc.data().createdAt.toDate())
                     }
 
                     orders.push(order);
@@ -75,12 +78,12 @@ class OrderService {
                 const tmp = {
                     uid: doc.id,
                     job: jobDoc,
+                    price: doc.data().price,
                     status: doc.data().status,
                     isReview: doc.data().isReview,
                     isPayment: doc.data().isPayment,
-                    price: doc.data().price,
-                    createdAt: doc.data().createdAt,
                     serviceType: doc.data().serviceType,
+                    createdAt: formatDateAndTime(doc.data().createdAt.toDate()),
                 }
 
                 if (tmp.isReview) {
@@ -111,12 +114,12 @@ class OrderService {
                 const tmp = {
                     uid: doc.id,
                     worker: workerDoc,
+                    price: doc.data().price,
                     status: doc.data().status,
                     isReview: doc.data().isReview,
                     isPayment: doc.data().isPayment,
-                    price: doc.data().price,
-                    createdAt: doc.data().createdAt,
                     serviceType: doc.data().serviceType,
+                    createdAt: formatDateAndTimeNow(doc.data().createdAt.toDate()),
                 }
 
                 if (tmp.isReview) {

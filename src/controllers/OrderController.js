@@ -3,14 +3,12 @@ const { failResponse, successResponse, successDataResponse } = require("../utils
 const { OrderCreateValid } = require("../utils/validator/OrderValid");
 
 const { orderStatusNotification } = require("../notifications/OrderNotification");
-const { formatDateAndTimeNow } = require("../utils/formatDate");
 const JobService = require("../services/JobService");
 
 const createOrder = async (req, res) => {
     try {
         const rawData = req.body;
 
-        rawData['createdAt'] = formatDateAndTimeNow();
         const validated = await OrderCreateValid.validateAsync(rawData, { stripUnknown: true });
 
         const checkServiceType = await JobService.checkServiceType(validated.jobID, validated.serviceType);
@@ -26,7 +24,6 @@ const createOrder = async (req, res) => {
 
         const price = await JobService.getPrice(validated.jobID, validated.serviceType);
         validated['price'] = price;
-        validated['isPayment'] = false;
 
         await OrderService.createOrder(validated);
         return successResponse(res, 200, 'Thành công')
