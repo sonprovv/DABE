@@ -123,7 +123,7 @@ const loginWithGG = async (req, res) => {
         }
 
         let currentClient;
-        const clientDoc = clientDoc = await db.collection(`${role}s`).doc(uid).get();
+        const clientDoc = await db.collection(`${role}s`).doc(uid).get();
 
         if (clientDoc.exists) {
             currentClient = await getClient(currentAccount);

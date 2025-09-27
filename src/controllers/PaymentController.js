@@ -1,4 +1,5 @@
 const { checkPaymentNotification } = require("../notifications/PaymentNotification");
+const AccountService = require("../services/AccountService");
 const { failResponse, successResponse } = require("../utils/response");
 
 const checkPayment = async (req, res) => {
@@ -12,11 +13,15 @@ const checkPayment = async (req, res) => {
     }
     else {
         console.log(req.body);
-        console.log(req.body.description.split('.')[3]);
         
         const des = req.body.description.split('.')[3];
         const [ clientID, jobID, serviceType ] = des.split('_');
         const amount = res.body.transferAmount;
+
+        const accountDoc = await AccountService.getByUID(clientID);
+        if (accountDoc.role==='user') {
+            
+        }
 
         await checkPaymentNotification(clientID, jobID, serviceType, amount);
 
