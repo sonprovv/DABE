@@ -18,8 +18,7 @@ const checkPayment = async (req, res) => {
         
         const des = req.body.description.split('.')[3];
         const [ clientID, jobID, serviceType ] = des.split('_');
-        const amount = res.body.transferAmount;
-        console.log(res.body.transferAmount);
+        const amount = req.body.transferAmount;
         console.log(amount)
 
         try {
