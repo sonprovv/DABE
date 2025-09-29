@@ -25,7 +25,7 @@ const checkPayment = async (req, res) => {
             const accountDoc = await AccountService.getByUID(clientID);
             if (accountDoc.role==='user') {
                 console.log('create Payment User')
-                await PaymentService.createPayment(clientID, jobID, serviceType);
+                await PaymentService.createPayment(clientID, jobID, amount, serviceType);
                 await checkPaymentNotification(clientID, jobID, serviceType, amount);
             }
         } catch (err) {

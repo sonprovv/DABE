@@ -3,11 +3,12 @@ const { db } = require("../config/firebase");
 class PaymentService {
     constructor() {}
 
-    async createPayment(userID, jobID, serviceType) {
+    async createPayment(userID, jobID, amount, serviceType) {
         try {
             await db.collection('payments').add({
                 userID: userID,
                 jobID: jobID,
+                amount: amount,
                 serviceType: serviceType,
                 createdAt: new Date()
             })
