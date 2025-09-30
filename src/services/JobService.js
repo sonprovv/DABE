@@ -1,8 +1,6 @@
 const { db } = require("../config/firebase");
-const { formatDate, formatDateAndTime } = require("../utils/formatDate");
+const { formatDate } = require("../utils/formatDate");
 const { CleaningJobGetvalid, HealthcareJobGetValid, MaintenanceJobGetValid } = require("../utils/validator/JobValid");
-const AccountService = require("./AccountService");
-const ServiceService = require("./ServiceService");
 const TimeService = require("./TimeService");
 const UserService = require("./UserService");
 
@@ -91,8 +89,8 @@ class JobService {
                     const powerRef = await db.collection('machineQuantities').add(power);
                     powerIDs.push(powerRef.id);
                 }
-                service['powers'] = powerIDs;
-                const serviceRef = await db.collection('maintenanceJobDetails').add(service);
+                const doc = { ...service, powers: powerIDs }
+                const serviceRef = await db.collection('maintenanceJobDetails').add(doc);
                 serviceIDs.push(serviceRef.id);
             }
 

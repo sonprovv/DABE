@@ -36,6 +36,23 @@ class ServiceService {
         }
     }
 
+
+    async getMaintenanceServiceByUID(uid) {
+        try {
+            const maintenanceDoc = await db.collection('maintenanceServices').doc(uid).get();
+
+            if (!maintenanceDoc.exists) {
+                throw new Error("Không tìm thấy thông tin");
+            }
+
+            return (new MaintenanceServiceModel({ uid: uid, ...maintenanceDoc.data() })).getInfo();
+
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không tìm thấy thông tin");
+        }
+    }
+
     async getCleaningService() {
         try {
             const snapshot = await db.collection('cleaningServices').get();

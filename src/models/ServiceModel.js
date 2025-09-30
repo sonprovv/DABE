@@ -54,18 +54,9 @@ class MaintenanceServiceModel extends ServiceModel {
     }
 
     getInfo() {
-
-        const res = [];
-        for (let power of this.powers) {
-            res.push({
-                powerName: power,
-                quantity: 0
-            })
-        }
-
         return {
             ...super.getInfo(),
-            powers: res,
+            powers: this.powers,
             maintenance: this.maintenance
         }
     }

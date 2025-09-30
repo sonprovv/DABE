@@ -3,32 +3,69 @@ const JobService = require("../services/JobService");
 const { failResponse, successDataResponse } = require("../utils/response");
 const { CleaningJobCreateValid, HealthcareJobCreateValid, MaintenanceJobCreateValid } = require("../utils/validator/JobValid");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
+const ServiceService = require('../services/ServiceService');
+const { jobEmbedding } = require('../ai/Embedding');
 
 dayjs.extend(customParseFormat);
+
+const jobEmbed = async (job) => {
+    if (job.serviceType==='HEALTHCARE') {
+        job.services = await Promise.all(job.services.map(async (service) => {
+            const doc = await ServiceService.getHealthcareServiceByUID(service.serviceID);
+            return {
+                ...service,
+                serviceName: doc.serviceName
+            }
+        }))
+    }
+    else if (job.serviceType==='MAINTENANCE') {
+        job.services = await Promise.all(job.services.map(async (service) => {
+            const doc = await ServiceService.getMaintenanceServiceByUID(service.uid);
+            return {
+                ...service,
+                serviceName: doc.serviceName
+            }
+        }))
+    }
+
+    return await jobEmbedding(job);
+}
 
 const createJob = async (req, res) => {
     try {
         const { serviceType } = req.params;
         const rawData = req.body;
 
-        if (serviceType.toUpperCase()==="CLEANING") {
-            const validated = await CleaningJobCreateValid.validateAsync(rawData, { stripUnknown: true });
+        const type = serviceType.toUpperCase();
 
-            const job = await JobService.createCleaningJob(validated);
-            return successDataResponse(res, 200, job, 'newJob');
+        const configs = {
+            CLEANING: {
+                validator: CleaningJobCreateValid,
+                creator: JobService.createCleaningJob
+            },
+            HEALTHCARE: {
+                validator: HealthcareJobCreateValid,
+                creator: JobService.createHealthcareJob
+            },
+            MAINTENANCE: {
+                validator: MaintenanceJobCreateValid,
+                creator: JobService.createMaintenanceJob
+            },
         }
-        else if (serviceType.toUpperCase()==="HEALTHCARE") {
-            const validated = await HealthcareJobCreateValid.validateAsync(rawData, { stripUnknown: true });
 
-            const job = await JobService.createHealthcareJob(validated);
-            return successDataResponse(res, 200, job, 'newJob');
+        const config = configs[type]
+        if (!config) {
+            return failResponse(res, 400, `Invalid serviceType: ${serviceType}`);
         }
-        else if (serviceType.toUpperCase()==="MAINTENANCE") {
-            const validated = await MaintenanceJobCreateValid.validateAsync(rawData, { stripUnknown: true });
 
-            const job = await JobService.createMaintenanceJob(validated);
-            return successDataResponse(res, 200, job, 'newJob');
-        }
+        const validated = await config.validator.validateAsync(rawData, { stripUnknown: true });
+        const job = await config.creator(validated);
+
+        const embed = await jobEmbed(job);
+
+        if (!embed) return failResponse(res, 500, 'Embed job không thành công');
+
+        return successDataResponse(res, 200, job, 'newJob');
     } catch (err) {
         console.log(err.message);
         return failResponse(res, 500, err.message);
