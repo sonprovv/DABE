@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { UserModel } = require("../models/ClientModel");
 const { formatDate } = require("../utils/formatDate");
 const AccountService = require("./AccountService");
 
@@ -15,11 +16,12 @@ class UserService {
 
             const accountDoc = await AccountService.getByUID(uid);
             const userData = userDoc.data();
-            userData['dob'] = formatDate(typeof userData.dob.toDate==='function' ? userData.dob.toDate() : userData.dob);
             userData['email'] = accountDoc.email;
             userData['role'] = accountDoc.role;
 
-            return { uid: uid, ...userData };
+            const user = new UserModel({ uid: uid, ...userData });
+
+            return user.getInfo();
         } catch (err) {
             console.error(err.message);
             throw new Error("Không tìm thấy thông tin")
@@ -42,22 +44,10 @@ class UserService {
             const userRef = db.collection('users').doc(uid);
             await userRef.update(data);
 
-            const updatedUser = await userRef.get();
-
             return validated;
         } catch (err) {
             console.error(err.message);
             throw new Error("Cập nhật không thành công")
-        }
-    }
-
-    async deleteUser(uid) {
-        try {
-            const userRef = db.collection('users').doc(uid);
-            await userRef.delete();
-        } catch (err) {
-            console.error(err.message);
-            throw new Error("Xóa người dùng không thành công")
         }
     }
 }

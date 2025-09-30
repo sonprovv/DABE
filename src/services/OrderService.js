@@ -10,9 +10,7 @@ class OrderService {
 
     async createOrder(data) {
         try {
-            const docRef = await db.collection('orders').add(data);
-
-            return { uid: docRef.id, ...data }
+            await db.collection('orders').add(data);
         } catch (err) {
             console.log(err.message);
             throw new Error("Tạo order không thành công")

@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const AccountModel = require("../models/AccountModel");
 
 class AccountService {
     constructor() {}
@@ -11,7 +12,9 @@ class AccountService {
                 throw new Error("Tài khoản không tồn tại")
             }
 
-            return { uid: accountDoc.id, ...accountDoc.data() };
+            const accountModel = new AccountModel({ uid: accountDoc.id, ...accountDoc.data() })
+
+            return accountModel.getInfo();
         } catch (err) {
             console.error(err);
             throw new Error("Không tìm thấy tài khoản")
@@ -19,9 +22,8 @@ class AccountService {
     }
 
     async createAccount(validated) {
-        const {uid, ...data} = validated;
-
         try {
+            const {uid, ...data} = (new AccountModel(validated)).getInfo();
             await db.collection('accounts').doc(uid).set(data);
 
             return validated;

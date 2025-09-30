@@ -28,7 +28,6 @@ const MaintenanceServiceValid = Joi.object({
             quantity: Joi.number().valid(0).required(),
         })
     ).required(),
-    isMaintenance: Joi.boolean().valid(false).required(),
     maintenance: Joi.string().required(),
 })
 

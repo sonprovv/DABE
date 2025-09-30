@@ -1,9 +1,18 @@
 class AccountModel {
-    constructor(uid, email, role, provider) {
-        this.uid = uid;
-        this.email = email;
-        this.role = role;
-        this.provider = provider;
+    constructor(data) {
+        this.uid = data.uid;
+        this.email = data.email;
+        this.role = data.role;
+        this.provider = data.provider;
+    }
+
+    getInfo() {
+        return {
+            uid: this.uid,
+            email: this.email,
+            role: this.role,
+            provider: this.provider
+        }
     }
 }
 

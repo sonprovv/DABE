@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const PaymentModel = require("../models/PaymentModel");
 
 class PaymentService {
     constructor() {}
@@ -15,6 +16,25 @@ class PaymentService {
         } catch (err) {
             console.log(err.message);
             throw new Error('Tạo thanh toán không thành công');
+        }
+    }
+
+    async getPayments() {
+        try {
+            const snapshot = await db.collection('payments').get();
+            const payments = [];
+
+            snapshot.docs.map(doc => {
+                payments.push(
+                    (new PaymentModel({ uid: doc.id, ...doc.data() })).getInfo()
+                )
+            })
+
+            return payments;
+
+        } catch (err) {
+            console.log(err.message);
+            throw new Error('Không tìm thấy payments');
         }
     }
 }

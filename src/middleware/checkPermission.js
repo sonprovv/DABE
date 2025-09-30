@@ -1,5 +1,4 @@
 const { auth, db } = require('../config/firebase');
-const UserService = require('../services/UserService');
 const { failResponse } = require('../utils/response');
 
 const checkPermission = (roles) => {

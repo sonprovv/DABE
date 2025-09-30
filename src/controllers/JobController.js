@@ -1,12 +1,8 @@
 const dayjs = require('dayjs');
 const JobService = require("../services/JobService");
-const { formatDate } = require("../utils/formatDate");
 const { failResponse, successDataResponse } = require("../utils/response");
 const { CleaningJobCreateValid, HealthcareJobCreateValid, MaintenanceJobCreateValid } = require("../utils/validator/JobValid");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
-const AccountService = require('../services/AccountService');
-const UserService = require('../services/UserService');
-const UserModel = require('../models/UserModel');
 
 dayjs.extend(customParseFormat);
 

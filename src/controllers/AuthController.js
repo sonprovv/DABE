@@ -1,16 +1,14 @@
-const UserModel = require("../models/UserModel");
-const WorkerModel = require("../models/WorkerModel");
-const AccountModel = require("../models/AccountModel");
 const UserService = require("../services/UserService");
 const AccountService = require("../services/AccountService");
 const WorkerService = require("../services/WorkerService");
+const AdminService = require("../services/AdminService");
 const { failResponse, successDataResponse } = require("../utils/response");
-const { UserValid, WorkerValid, AdminValid } = require("../utils/validator/UserValid");
+const { UserValid, WorkerValid, AdminValid } = require("../utils/validator/ClientValid");
 const { auth, db } = require("../config/firebase");
 const { default: axios } = require("axios");
 const dotenv = require('dotenv');
-const AdminService = require("../services/AdminService");
-const AdminModel = require("../models/AdminModel");
+const { UserModel, AdminModel, WorkerModel } = require("../models/ClientModel");
+const AccountModel = require("../models/AccountModel");
 dotenv.config();
 
 const checkEmailExists = async (email) => {
@@ -111,12 +109,12 @@ const loginWithGG = async (req, res) => {
         if (accountDoc.exists) {
             currentAccount = { uid: accountDoc.id, ...accountDoc.data() };
         } else {
-            const newAccount = new AccountModel(
-                uid,
-                email,
-                role,
-                'google.com'
-            )
+            const newAccount = new AccountModel({
+                uid: uid,
+                email: email,
+                role: role,
+                provider: 'google.com'
+            })
 
             await AccountService.createAccount(newAccount);
             currentAccount = newAccount;
@@ -180,12 +178,12 @@ const createClient = async (req, res) => {
 
         const { idToken, refreshToken } = response.data;
 
-        const newAccount = new AccountModel(
-            authAccount.uid,
-            authAccount.email,
-            role,
-            'normal'
-        );
+        const newAccount = new AccountModel({
+            uid: authAccount.uid,
+            email: authAccount.email,
+            role: role,
+            provider: 'normal'
+        });
 
         const rawClient = {
             uid: authAccount.uid,

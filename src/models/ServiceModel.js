@@ -1,20 +1,9 @@
 class ServiceModel {
-    constructor(uid, image, serviceType, serviceName) {
-        this.uid = uid;
-        this.image = image;
-        this.serviceType = serviceType;
-        this.serviceName = serviceName
-    }
-
-    getInfo() {
-        throw new Error("Thiếu phương thức getInfo")
-    }
-}
-
-class CleaningServiceModel extends ServiceModel {
-    constructor(uid, image, serviceType, serviceName, tasks) {
-        super(uid, image, serviceType, serviceName);
-        this.tasks = tasks;
+    constructor(data) {
+        this.uid = data.uid;
+        this.image = data.image;
+        this.serviceType = data.serviceType;
+        this.serviceName = data.serviceName
     }
 
     getInfo() {
@@ -23,25 +12,34 @@ class CleaningServiceModel extends ServiceModel {
             image: this.image,
             serviceType: this.serviceType,
             serviceName: this.serviceName,
-            image: this.image,
+        }
+    }
+}
+
+class CleaningServiceModel extends ServiceModel {
+    constructor(data) {
+        super(data);
+        this.tasks = data.tasks;
+    }
+
+    getInfo() {
+        return {
+            ...super.getInfo(),
             tasks: this.tasks
         }
     }
 }
 
 class HealthcareServiceModel extends ServiceModel {
-    constructor(uid, image, serviceType, serviceName, duties, excludedTasks) {
-        super(uid, image, serviceType, serviceName);
-        this.duties = duties;
-        this.excludedTasks = excludedTasks;
+    constructor(data) {
+        super(data);
+        this.duties = data.duties;
+        this.excludedTasks = data.excludedTasks;
     }
 
     getInfo() {
         return {
-            uid: this.uid,
-            image: this.image,
-            serviceType: this.serviceType,
-            serviceName: this.serviceName,
+            ...super.getInfo(),
             duties: this.duties,
             excludedTasks: this.excludedTasks
         }
@@ -49,11 +47,10 @@ class HealthcareServiceModel extends ServiceModel {
 }
 
 class MaintenanceServiceModel extends ServiceModel {
-    constructor(uid, image, serviceType, serviceName, powers, isMaintenance, maintenance) {
-        super(uid, image, serviceType, serviceName);
-        this.powers = powers;
-        this.isMaintenance = isMaintenance;
-        this.maintenance = maintenance;
+    constructor(data) {
+        super(data);
+        this.powers = data.powers;
+        this.maintenance = data.maintenance;
     }
 
     getInfo() {
@@ -67,12 +64,8 @@ class MaintenanceServiceModel extends ServiceModel {
         }
 
         return {
-            uid: this.uid,
-            image: this.image,
-            serviceType: this.serviceType,
-            serviceName: this.serviceName,
+            ...super.getInfo(),
             powers: res,
-            isMaintenance: this.isMaintenance,
             maintenance: this.maintenance
         }
     }

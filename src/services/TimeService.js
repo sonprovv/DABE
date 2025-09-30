@@ -10,12 +10,7 @@ class TimeService {
             const durations = [];
 
             snapshot.forEach(doc => {
-                durations.push(new DurationModel(
-                    doc.id,
-                    doc.data().workingHour,
-                    doc.data().fee,
-                    doc.data().description
-                ))
+                durations.push((new DurationModel({ uid: doc.id, ...doc.data() })).getInfo())
             })
 
             return durations;
@@ -31,11 +26,7 @@ class TimeService {
             const shifts = [];
 
             snapshot.forEach(doc => {
-                shifts.push(new ShiftModel(
-                    doc.id,
-                    doc.data().workingHour,
-                    doc.data().fee
-                ))
+                shifts.push((new ShiftModel({ uid: doc.uid, ...doc.data() })).getInfo())
             })
             return shifts;
         } catch (err) {
@@ -52,7 +43,7 @@ class TimeService {
                 throw new Error("Không tìm thấy thông tin");
             }
 
-            return { uid: uid, ...durationDoc.data() };
+            return (new DurationModel({ uid: uid, ...durationDoc.data() })).getInfo();
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");
@@ -67,7 +58,7 @@ class TimeService {
                 throw new Error("Không tìm thấy thông tin");
             }
 
-            return { uid, ...shiftDoc.data() };
+            return (new ShiftModel({ uid: uid, ...shiftDoc.data() })).getInfo();
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");

@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { WorkerModel } = require("../models/ClientModel");
 const { formatDate } = require("../utils/formatDate");
 const AccountService = require("./AccountService");
 
@@ -15,11 +16,12 @@ class WorkerService {
 
             const accountDoc = await AccountService.getByUID(uid);
             const workerData = workerDoc.data();
-            workerData['dob'] = formatDate(typeof workerData.dob.toDate==='function' ? workerData.dob.toDate() : workerData.dob);
             workerData['email'] = accountDoc.email;
             workerData['role'] = accountDoc.role;
 
-            return { uid: uid, ...workerData };
+            const worker = new WorkerModel({ uid: uid, ...workerData })
+
+            return worker.getInfo();
         } catch (err) {
             console.error(err.message);
             throw new Error("Không tìm thấy thông tin")
@@ -36,28 +38,16 @@ class WorkerService {
         }
     }
 
-    async updateUser(validated) {
+    async updateWorker(validated) {
         const {uid, ...data} = validated;
         try {
-            const userRef = db.collection('workers').doc(uid);
-            await userRef.update(data);
+            const workerRef = db.collection('workers').doc(uid);
+            await workerRef.update(data);
 
-            const updatedUser = await userRef.get();
-
-            return { uid: uid, ...updatedUser.data() };
+            return validated;
         } catch (err) {
             console.error(err.message);
             throw new Error("Cập nhật không thành công")
-        }
-    }
-
-    async deleteUser(uid) {
-        try {
-            const userRef = db.collection('workers').doc(uid);
-            await userRef.delete();
-        } catch (err) {
-            console.error(err.message);
-            throw new Error("Xóa người dùng không thành công")
         }
     }
 }

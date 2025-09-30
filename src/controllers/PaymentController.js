@@ -1,7 +1,7 @@
 const { checkPaymentNotification } = require("../notifications/PaymentNotification");
 const AccountService = require("../services/AccountService");
 const PaymentService = require("../services/PaymentService");
-const { failResponse } = require("../utils/response");
+const { failResponse, successDataResponse } = require("../utils/response");
 
 const checkPayment = async (req, res) => {
 
@@ -34,6 +34,18 @@ const checkPayment = async (req, res) => {
     }
 }
 
+const getPayments = async (req, res) => {
+    try {
+        const payments = await PaymentService.getPayments();
+
+        return successDataResponse(res, 200, payments, 'payments');
+    } catch (err) {
+        console.log(err.message);
+        return failResponse(res, 500, err.message);
+    }
+}
+
 module.exports = {
     checkPayment,
+    getPayments,
 }

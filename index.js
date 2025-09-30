@@ -18,8 +18,8 @@ app.use('/api/emails/', EmailRouter);
 const AuthRouter = require('./src/routes/AuthRouter');
 app.use('/api/auth', AuthRouter);
 
-const UserRouter = require('./src/routes/UserRouter');
-app.use('/api/users', UserRouter);
+const ClientRouter = require('./src/routes/ClientRouter');
+app.use('/api/users', ClientRouter);
 
 const ServiceRouter = require('./src/routes/ServiceRouter');
 app.use('/api/services', ServiceRouter);

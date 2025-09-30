@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { AdminModel } = require("../models/ClientModel");
 const { formatDate } = require("../utils/formatDate");
 const AccountService = require("./AccountService");
 
@@ -15,11 +16,12 @@ class AdminService {
 
             const accountDoc = await AccountService.getByUID(uid);
             const adminData = adminDoc.data();
-            adminData['dob'] = formatDate(typeof adminData.dob.toDate==='function' ? adminData.dob.toDate() : adminData.dob);
             adminData['email'] = accountDoc.email;
             adminData['role'] = accountDoc.role;
 
-            return { uid: uid, ...adminData };
+            const admin = new AdminModel({ uid: uid, ...adminData })
+
+            return admin.getInfo();
         } catch (err) {
             console.error(err.message);
             throw new Error("Không tìm thấy thông tin")
@@ -41,8 +43,6 @@ class AdminService {
         try {
             const adminRef = db.collection('admins').doc(uid);
             await adminRef.update(data);
-
-            await adminRef.get();
 
             return validated;
         } catch (err) {
