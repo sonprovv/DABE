@@ -37,6 +37,19 @@ class PaymentService {
             throw new Error('Không tìm thấy payments');
         }
     }
+
+    async updatePayment(orderID) {
+        try {
+            const orderDoc = await db.collection('orders').doc(orderID).get();
+            if (!orderDoc.exists) throw new Error('Order không tồn tại');
+
+            await db.collection('orders').doc(orderDoc).update({
+                isPayment: true
+            })
+        } catch (err) {
+            throw new Error('Cập nhật không thành công')
+        }
+    }
 }
 
 module.exports = new PaymentService();

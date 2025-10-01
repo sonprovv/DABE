@@ -13,7 +13,7 @@ class TimeService {
                 durations.push((new DurationModel({ uid: doc.id, ...doc.data() })).getInfo())
             })
 
-            return durations;
+            return durations.sort((a, b) => a.workingHour - b.workingHour);
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");
@@ -28,7 +28,7 @@ class TimeService {
             snapshot.forEach(doc => {
                 shifts.push((new ShiftModel({ uid: doc.uid, ...doc.data() })).getInfo())
             })
-            return shifts;
+            return shifts.sort((a, b) => a.workingHour - b.workingHour);
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");

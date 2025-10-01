@@ -7,12 +7,12 @@ const getByServiceTye = async (req, res) => {
     try {
         const { serviceType } = req.params;
 
-        const exists = await redis.exists(`/services/${serviceType.toLowerCase()}`);
+        // const exists = await redis.exists(`/services/${serviceType.toLowerCase()}`);
 
-        if (exists) {
-            const data = await redis.get(`/services/${serviceType.toLowerCase()}`);
-            return successDataResponse(res, 200, data);
-        }
+        // if (exists) {
+        //     const data = await redis.get(`/services/${serviceType.toLowerCase()}`);
+        //     return successDataResponse(res, 200, data);
+        // }
 
         if (serviceType.toUpperCase()==="CLEANING") {
             
@@ -23,7 +23,7 @@ const getByServiceTye = async (req, res) => {
                 services: services,
                 durations: durations
             }
-            await redis.set(`/services/${serviceType.toLowerCase()}`, result);
+            // await redis.set(`/services/${serviceType.toLowerCase()}`, result);
             return successDataResponse(res, 200, result);
         }
         else if (serviceType.toUpperCase()==="HEALTHCARE") {
@@ -34,13 +34,13 @@ const getByServiceTye = async (req, res) => {
                 services: services,
                 shifts: shifts
             }
-            await redis.set(`/services/${serviceType.toLowerCase()}`, result);
+            // await redis.set(`/services/${serviceType.toLowerCase()}`, result);
             return successDataResponse(res, 200, result);
         }
         else if (serviceType.toUpperCase()==="MAINTENANCE") {
             const services = await ServiceService.getMaintenanceService();
 
-            await redis.set(`/services/${serviceType.toLowerCase()}`, services);
+            // await redis.set(`/services/${serviceType.toLowerCase()}`, services);
             return successDataResponse(res, 200, services);
         }
     } catch (err) {

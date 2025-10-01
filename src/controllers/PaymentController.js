@@ -1,7 +1,8 @@
+const { default: axios } = require("axios");
 const { checkPaymentNotification } = require("../notifications/PaymentNotification");
 const AccountService = require("../services/AccountService");
 const PaymentService = require("../services/PaymentService");
-const { failResponse, successDataResponse } = require("../utils/response");
+const { failResponse, successDataResponse, successResponse } = require("../utils/response");
 
 const checkPayment = async (req, res) => {
 
@@ -34,6 +35,23 @@ const checkPayment = async (req, res) => {
     }
 }
 
+const checkPaymentAdmin = async (req, res) => {
+    try {
+        const response = await axios.get('https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgPIlDu8jJFWOWz5PEZUhGXXVNEVdwaAetDNAjf8rVnyL49Pf87MGFMFbJvv9aHIcs7Ayj-NXpGqpGZfawFBYqz_EUbK-StTL2FSr1lTIocidFpSDaVGXTU4Ik0Yd4hWCnZcSxbJMSNf2DUr0JRIYWJdVLUtPq0EBYxQz6GnX0keTQXtFYarH97mX11cjk7YJmF7ztr3iZ4GTq4Z7snw5yz9tGO_gvzYrXR_yGB8_bDMGKH6cZqQk9vRDyDslHUPr3GOS5ww3ogscA2trZkhX3I5B4CMQ&lib=MbMul8v15srDmANSKXdW3tuQ5ZtOviKAv');
+        const result = response.data;
+
+        const lastPaid = result.data['Mô tả'];
+        const orderID = lastPaid.split('-')[0];
+
+        await PaymentService.updatePayment(orderID);
+
+        return successResponse(res, 200, 'Thành công');
+    } catch (err) {
+        console.log(err.message);
+        return failResponse(res, 500, err.message);
+    }
+}
+
 const getPayments = async (req, res) => {
     try {
         const payments = await PaymentService.getPayments();
@@ -47,5 +65,6 @@ const getPayments = async (req, res) => {
 
 module.exports = {
     checkPayment,
+    checkPaymentAdmin,
     getPayments,
 }
