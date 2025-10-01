@@ -3,6 +3,7 @@ const { checkPaymentNotification } = require("../notifications/PaymentNotificati
 const AccountService = require("../services/AccountService");
 const PaymentService = require("../services/PaymentService");
 const { failResponse, successDataResponse, successResponse } = require("../utils/response");
+const JobService = require("../services/JobService");
 
 const checkPayment = async (req, res) => {
 
@@ -27,6 +28,7 @@ const checkPayment = async (req, res) => {
             if (accountDoc.role==='user') {
                 console.log('create Payment User')
                 await PaymentService.createPayment(clientID, jobID, amount, serviceType);
+                await JobService.putStatusByUID(jobID, serviceType, 'Hiring');
                 await checkPaymentNotification(clientID, jobID, serviceType, amount);
             }
         } catch (err) {
@@ -37,11 +39,18 @@ const checkPayment = async (req, res) => {
 
 const checkPaymentAdmin = async (req, res) => {
     try {
+        const { orderID } = req.params;
         const response = await axios.get('https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgPIlDu8jJFWOWz5PEZUhGXXVNEVdwaAetDNAjf8rVnyL49Pf87MGFMFbJvv9aHIcs7Ayj-NXpGqpGZfawFBYqz_EUbK-StTL2FSr1lTIocidFpSDaVGXTU4Ik0Yd4hWCnZcSxbJMSNf2DUr0JRIYWJdVLUtPq0EBYxQz6GnX0keTQXtFYarH97mX11cjk7YJmF7ztr3iZ4GTq4Z7snw5yz9tGO_gvzYrXR_yGB8_bDMGKH6cZqQk9vRDyDslHUPr3GOS5ww3ogscA2trZkhX3I5B4CMQ&lib=MbMul8v15srDmANSKXdW3tuQ5ZtOviKAv');
-        const result = response.data;
+        
+        console.log("Res:", response)
+        const result = response.data.data;
 
-        const lastPaid = result.data['Mô tả'];
-        const orderID = lastPaid.split('-')[0];
+        console.log(result)
+        let orderIDDoc = result[result.length-1]['Mô tả'];
+
+        if (orderIDDoc.includes('-')) orderIDDoc = orderIDDoc.split('-')[0];
+        console.log(orderIDDoc)
+        if (orderIDDoc!==orderID) return failResponse(res, 500, 'Chuyển khoản không thành công');
 
         await PaymentService.updatePayment(orderID);
 

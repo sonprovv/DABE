@@ -43,7 +43,7 @@ class PaymentService {
             const orderDoc = await db.collection('orders').doc(orderID).get();
             if (!orderDoc.exists) throw new Error('Order không tồn tại');
 
-            await db.collection('orders').doc(orderDoc).update({
+            await db.collection('orders').doc(orderID).update({
                 isPayment: true
             })
         } catch (err) {
