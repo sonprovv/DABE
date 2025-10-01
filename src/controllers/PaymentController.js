@@ -4,6 +4,7 @@ const AccountService = require("../services/AccountService");
 const PaymentService = require("../services/PaymentService");
 const { failResponse, successDataResponse, successResponse } = require("../utils/response");
 const JobService = require("../services/JobService");
+const OrderService = require("../services/OrderService");
 
 const checkPayment = async (req, res) => {
 
@@ -52,7 +53,7 @@ const checkPaymentAdmin = async (req, res) => {
         console.log(orderIDDoc)
         if (orderIDDoc!==orderID) return failResponse(res, 500, 'Chuyển khoản không thành công');
 
-        await PaymentService.updatePayment(orderID);
+        await OrderService.updatePayment(orderID);
 
         return successResponse(res, 200, 'Thành công');
     } catch (err) {

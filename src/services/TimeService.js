@@ -26,7 +26,7 @@ class TimeService {
             const shifts = [];
 
             snapshot.forEach(doc => {
-                shifts.push((new ShiftModel({ uid: doc.uid, ...doc.data() })).getInfo())
+                shifts.push((new ShiftModel({ uid: doc.id, ...doc.data() })).getInfo())
             })
             return shifts.sort((a, b) => a.workingHour - b.workingHour);
         } catch (err) {

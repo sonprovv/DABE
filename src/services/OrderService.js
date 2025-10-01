@@ -154,6 +154,19 @@ class OrderService {
 
         return { uid: updatedOrder.id, ...updatedOrder.data() }
     }
+
+    async updatePayment(orderID) {
+        try {
+            const orderDoc = await db.collection('orders').doc(orderID).get();
+            if (!orderDoc.exists) throw new Error('Order không tồn tại');
+
+            await db.collection('orders').doc(orderID).update({
+                isPayment: true
+            })
+        } catch (err) {
+            throw new Error('Cập nhật không thành công')
+        }
+    }
 }
 
 module.exports = new OrderService();
