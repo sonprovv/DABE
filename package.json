@@ -11,7 +11,7 @@
   },
   "scripts": {
     "dev": "vercel dev",
-    "start": "nodemon index.js",
+    "start": "node index.js",
     "setup-ai": "pip install -r src/ai/requirements.txt",
     "build": "npm install && npm run setup-ai"
   },
