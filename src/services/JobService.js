@@ -1,8 +1,6 @@
 const { db } = require("../config/firebase");
-const { formatDate, formatDateAndTime } = require("../utils/formatDate");
+const { formatDate } = require("../utils/formatDate");
 const { CleaningJobGetvalid, HealthcareJobGetValid, MaintenanceJobGetValid } = require("../utils/validator/JobValid");
-const AccountService = require("./AccountService");
-const ServiceService = require("./ServiceService");
 const TimeService = require("./TimeService");
 const UserService = require("./UserService");
 
@@ -91,8 +89,8 @@ class JobService {
                     const powerRef = await db.collection('machineQuantities').add(power);
                     powerIDs.push(powerRef.id);
                 }
-                service['powers'] = powerIDs;
-                const serviceRef = await db.collection('maintenanceJobDetails').add(service);
+                const doc = { ...service, powers: powerIDs }
+                const serviceRef = await db.collection('maintenanceJobDetails').add(doc);
                 serviceIDs.push(serviceRef.id);
             }
 
@@ -126,6 +124,34 @@ class JobService {
         })
     }
 
+    async getPrice(uid, serviceType) {
+        try {
+            const db_name = `${serviceType.toLowerCase()}Jobs`;
+            const jobDoc = await db.collection(db_name).doc(uid).get();
+
+            if (!jobDoc.exists) throw new Error("Lỗi không lấy được mức lương");
+
+            const price = jobDoc.data().price * 0.9;
+
+            return serviceType==='HEALTHCARE' ? price/jobDoc.data().workerQuantity : price;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không lấy được mức lương")
+        }
+    }
+
+    async getByUID(uid, serviceType) {
+        try {
+            const db_name = `${serviceType.toLowerCase()}Jobs`;
+            const jobDoc = await db.collection(db_name).doc(uid).get();
+
+            return await this.getJob(uid, jobDoc.data());
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không thành công")
+        }
+    }
+
     async getJobNew() {
         try {
             const now = new Date();
@@ -151,30 +177,6 @@ class JobService {
         } catch (err) {
             console.log(err.message);
             throw new Error("Không thành công");
-        }
-    }
-
-    async getByUID(uid, serviceType) {
-        try {
-            if (serviceType.toUpperCase()==='CLEANING') {
-                const jobDoc = await db.collection('cleaningJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            else if (serviceType.toUpperCase()==='HEALTHCARE') {
-                const jobDoc = await db.collection('healthcareJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            else if (serviceType.toUpperCase()==='MAINTENANCE') {
-                const jobDoc = await db.collection('maintenanceJobs').doc(uid).get();
-
-                return await this.getJob(uid, jobDoc.data());
-            }
-            throw new Error("Danh mục không tồn tại")
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Không thành công")
         }
     }
 
@@ -205,43 +207,10 @@ class JobService {
         }
     }
 
-    async getCleaningJobs() {
+    async getJobsByServiceType(serviceType) {
         try {
-            const snapshot = await db.collection('cleaningJobs').get();
-
-            const jobs = [];
-
-            await Promise.all(snapshot.docs.map(async (doc) => {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }));
-
-            return jobs;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Lỗi lấy thông tin job")
-        }
-    }
-
-    async getHealthcareJobs() {
-        try {
-            const snapshot = await db.collection('healthcareJobs').get();
-
-            const jobs = [];
-
-            await Promise.all(snapshot.docs.map(async (doc) => {
-                jobs.push(await this.getJob(doc.id, doc.data()));
-            }));
-
-            return jobs;
-        } catch (err) {
-            console.log(err.message);
-            throw new Error("Lỗi lấy thông tin job")
-        }
-    }
-
-    async getMaintenanceJobs() {
-        try {
-            const snapshot = await db.collection('maintenanceJobs').get();
+            const db_name = `${serviceType.toLowerCase()}Jobs`;
+            const snapshot = await db.collection(db_name).get();
 
             const jobs = [];
 
@@ -257,19 +226,11 @@ class JobService {
     }
 
     async getJob(uid, data) {
-        const accountDoc = await AccountService.getByUID(data.userID);
         const userDoc = await UserService.getByUID(data.userID);
 
-        const user = {
-            uid: data.userID,
-            ...userDoc,
-            email: accountDoc.email,
-            role: accountDoc.role
-        };
-        user['dob'] = formatDate(typeof user.dob.toDate === 'function' ? user.dob.toDate() : user.dob);
         delete data['userID'];
         data['uid'] = uid;
-        data['user'] = user;
+        data['user'] = userDoc;
         data['createdAt'] = formatDate(data.createdAt.toDate());
 
         if (data.serviceType==='CLEANING') {

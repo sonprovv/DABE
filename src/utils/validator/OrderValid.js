@@ -1,12 +1,13 @@
 const Joi = require('joi');
 
 const OrderCreateValid = Joi.object({
-    workerID: Joi.string().required(),
     jobID: Joi.string().required(),
-    isReview: Joi.boolean().default(false),
+    workerID: Joi.string().required(),
     status: Joi.string().default('Waiting'),
-    createdAt: Joi.string().required(),
-    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required()
+    isReview: Joi.boolean().default(false),
+    isPayment: Joi.boolean().default(false),
+    serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required(),
+    createdAt: Joi.date().default(new Date()),
 })
 
 const OrderUpdateStatusValid = Joi.object({

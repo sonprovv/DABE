@@ -1,17 +1,40 @@
+const { db } = require("../config/firebase");
+const PaymentModel = require("../models/PaymentModel");
+
 class PaymentService {
     constructor() {}
 
-    async createPayment(clientID, amount) {
+    async createPayment(userID, jobID, amount, serviceType) {
         try {
-            const now = new Date();
-            const month = now.getMonth() + 1;
-            const year = now.getFullYear();
+            await db.collection('payments').add({
+                userID: userID,
+                jobID: jobID,
+                amount: amount,
+                serviceType: serviceType,
+                createdAt: new Date()
+            })
+        } catch (err) {
+            console.log(err.message);
+            throw new Error('Tạo thanh toán không thành công');
+        }
+    }
 
-            const date = `Tháng ${month.toString().padStart(2, '0')}/${year}`;
+    async getPayments() {
+        try {
+            const snapshot = await db.collection('payments').get();
+            const payments = [];
+
+            snapshot.docs.map(doc => {
+                payments.push(
+                    (new PaymentModel({ uid: doc.id, ...doc.data() })).getInfo()
+                )
+            })
+
+            return payments;
 
         } catch (err) {
-            console.log(err.meesage)
-            throw new Error("Thêm mới payment không thành công")
+            console.log(err.message);
+            throw new Error('Không tìm thấy payments');
         }
     }
 }

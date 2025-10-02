@@ -4,7 +4,7 @@ const { failResponse, successDataResponse } = require("../utils/response");
 
 const getByClientID = async (req, res) => {
     try {
-        const clientID = req.user.uid;
+        const clientID = req.client.uid;
 
         const notifications = await NotificationService.getByClientID(clientID);
 
@@ -17,7 +17,7 @@ const getByClientID = async (req, res) => {
 
 const putClientReaded = async (req, res) => {
     try {
-        const clientID = req.user.uid;
+        const clientID = req.client.uid;
         const { notificationID } = req.params;
 
         const notification = await NotificationService.putClientReaded(clientID, notificationID);

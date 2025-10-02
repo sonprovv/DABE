@@ -1,5 +1,5 @@
 const { db } = require("../config/firebase");
-const { formatDate } = require("../utils/formatDate");
+const { formatDate, formatDateAndTime, formatDateAndTimeNow } = require("../utils/formatDate");
 const AccountService = require("./AccountService");
 const JobService = require("./JobService");
 const ReviewService = require("./ReviewService");
@@ -10,9 +10,7 @@ class OrderService {
 
     async createOrder(data) {
         try {
-            const docRef = await db.collection('orders').add(data);
-
-            return { uid: docRef.id, ...data }
+            await db.collection('orders').add(data);
         } catch (err) {
             console.log(err.message);
             throw new Error("Tạo order không thành công")
@@ -29,6 +27,55 @@ class OrderService {
         return false;
     }
 
+    async updatePayment(workerID, jobID) {
+        const snapshot = await db.collection('orders').where('workerID', '==', workerID).where('jobID', '==', jobID).get();
+        if (snapshot.empty) throw new Error('Không tồn tại order');
+        const order = snapshot.docs[1];
+
+        await db.collection('orders').doc(order.id).update({
+            isPayment: true
+        })
+    }
+
+    async getOrders() {
+        try {
+            const snapshot = await db.collection('orders').get();
+
+            const orders = [];
+            await Promise.all(snapshot.docs.map(async (doc) => {
+                try {
+                    const [ jobDoc, workerDoc ] = await Promise.all([
+                        JobService.getByUID(doc.data().jobID, doc.data().serviceType),
+                        WorkerService.getByUID(doc.data().workerID)
+                    ])
+                    
+                    const order = {
+                        uid: doc.id,
+                        jobID: doc.data().jobID,
+                        worker: workerDoc,
+                        user: jobDoc.user,
+                        price: doc.data().price,
+                        status: doc.data().status,
+                        isReview: doc.data().isReview,
+                        isPayment: doc.data().isPayment,
+                        serviceType: doc.data().serviceType,
+                        createdAt: formatDateAndTime(doc.data().createdAt.toDate())
+                    }
+
+                    orders.push(order);
+                } catch (err) {
+                    console.log(err.message);
+                    return;
+                }
+            }))
+
+            return orders;
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Get order không thành công")
+        }
+    }
+
     async getOrdersByWorkerID(workerID) {
         try {
             const snapshot = await db.collection('orders').where('workerID', '==', workerID).get();
@@ -39,10 +86,12 @@ class OrderService {
                 const tmp = {
                     uid: doc.id,
                     job: jobDoc,
-                    isReview: doc.data().isReview,
+                    price: doc.data().price,
                     status: doc.data().status,
-                    createdAt: doc.data().createdAt,
+                    isReview: doc.data().isReview,
+                    isPayment: doc.data().isPayment,
                     serviceType: doc.data().serviceType,
+                    createdAt: formatDateAndTime(doc.data().createdAt.toDate()),
                 }
 
                 if (tmp.isReview) {
@@ -73,10 +122,12 @@ class OrderService {
                 const tmp = {
                     uid: doc.id,
                     worker: workerDoc,
-                    isReview: doc.data().isReview,
+                    price: doc.data().price,
                     status: doc.data().status,
-                    createdAt: doc.data().createdAt,
-                    serviceType: doc.data().serviceType
+                    isReview: doc.data().isReview,
+                    isPayment: doc.data().isPayment,
+                    serviceType: doc.data().serviceType,
+                    createdAt: formatDateAndTimeNow(doc.data().createdAt.toDate()),
                 }
 
                 if (tmp.isReview) {
@@ -102,6 +153,19 @@ class OrderService {
         const updatedOrder = await db.collection('orders').doc(uid).get();
 
         return { uid: updatedOrder.id, ...updatedOrder.data() }
+    }
+
+    async updatePayment(orderID) {
+        try {
+            const orderDoc = await db.collection('orders').doc(orderID).get();
+            if (!orderDoc.exists) throw new Error('Order không tồn tại');
+
+            await db.collection('orders').doc(orderID).update({
+                isPayment: true
+            })
+        } catch (err) {
+            throw new Error('Cập nhật không thành công')
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const UserValid = Joi.object({
+const ClientValid = Joi.object({
     uid: Joi.string().required(),
     username: Joi.string().required(),
     gender: Joi.string().valid('Nam', 'Nữ', 'Khác').default('Nam'),
@@ -10,11 +10,15 @@ const UserValid = Joi.object({
     location: Joi.string().default('Chưa cập nhật'),
 })
 
-const WorkerValid = UserValid.keys({
+const UserValid = ClientValid;
+const AdminValid = ClientValid;
+const WorkerValid = ClientValid.keys({
     description: Joi.string().default('Chưa cập nhật')
 })
 
-const UserInfoValid = Joi.object({
+// --------------------------------------------------------------
+
+const ClientInfoValid = Joi.object({
     uid: Joi.string().required(),
     username: Joi.string().required(),
     gender: Joi.string().required(),
@@ -25,13 +29,17 @@ const UserInfoValid = Joi.object({
     
 })
 
-const WorkerInfoValid = UserInfoValid.keys({
+const UserInfoValid = ClientInfoValid;
+const AdminInfoValid = ClientInfoValid;
+const WorkerInfoValid = ClientInfoValid.keys({
     description: Joi.string().required()
 })
 
 module.exports = { 
     UserValid, 
+    AdminValid,
     WorkerValid,
     UserInfoValid,
+    AdminInfoValid,
     WorkerInfoValid
 };

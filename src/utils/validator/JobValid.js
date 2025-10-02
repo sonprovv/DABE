@@ -5,7 +5,7 @@ const JobValid = Joi.object({
     serviceType: Joi.string().valid('CLEANING', 'HEALTHCARE', 'MAINTENANCE').required(),
     price: Joi.number().required(),
     listDays: Joi.array().items(Joi.string()).min(1).required(),
-    status: Joi.string().default('Hiring'),
+    status: Joi.string().default('Not Payment'),
     location: Joi.string().required(),
 })
 
@@ -43,10 +43,10 @@ const MaintenanceJobValid = JobValid.keys({
             powers: Joi.array().items(
                 Joi.object({
                     powerName: Joi.string().required(),
-                    quantity: Joi.number().required()
+                    quantity: Joi.number().required(),
+                    quantityMaintenance: Joi.number().required(),
                 })
             ),
-            isMaintenance: Joi.boolean().required(),
             maintenance: Joi.string().required()
         })
     )

@@ -1,16 +1,13 @@
 const express = require('express')
 const cors = require('cors');
-const http = require('http');
-const { Server } = require('socket.io');
-const { swaggerUi, swaggerSpec } = require('./src/config/swagger');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization'],
+}));
 app.use(express.json());
-
-const server = http.createServer(app);
-
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const ImageRouter = require('./src/routes/ImageRouter');
 app.use('/api/images', ImageRouter);
@@ -18,8 +15,11 @@ app.use('/api/images', ImageRouter);
 const EmailRouter = require('./src/routes/EmailRouter');
 app.use('/api/emails/', EmailRouter);
 
-const UserRouter = require('./src/routes/UserRouter');
-app.use('/api/users', UserRouter);
+const AuthRouter = require('./src/routes/AuthRouter');
+app.use('/api/auth', AuthRouter);
+
+const ClientRouter = require('./src/routes/ClientRouter');
+app.use('/api/users', ClientRouter);
 
 const ServiceRouter = require('./src/routes/ServiceRouter');
 app.use('/api/services', ServiceRouter);
@@ -42,47 +42,17 @@ app.use('/api/devices', DeviceRouter);
 const NotificationRouter = require('./src/routes/NotificationRouter');
 app.use('/api/notifications', NotificationRouter);
 
+const PaymentRouter = require('./src/routes/PaymentRouter');
+app.use('/api/payments', PaymentRouter);
+
 const AIRouter = require('./src/routes/AIRouter');
 app.use('/api/ai', AIRouter);
 
 const HealthRouter = require('./src/routes/HealthRouter');
 app.use('/api', HealthRouter);
 
-const userSockets = require('./src/notifications/userSockets');
-const io = new Server(server, {
-    cors: { origin: "*" }
-});
-
-// io.on("connection", (socket) => {
-//     console.log("Client connected: ", socket.id);
-
-// Socket connection handling
-io.on("connection", (socket) => {
-    console.log("Client connected: ", socket.id);
-
-    socket.on("register", (userID) => {
-        userSockets.set(userID, socket);
-        socket.emit('createSocket', {
-            message: 'Emit thành công'
-        })
-        console.log(`User ${userID} register with socket ${socket.id}`);
-    })
-
-    socket.on("disconnect", () => {
-        for (let [userID, s] of userSockets.entries()) {
-            if (s.id === socket.id) {
-                userSockets.delete(userID);
-                console.log(`User ${userID} disconnected`);
-                break;
-            }
-        }
-    })
-})
-
-// Job Scheduling
-const { cleaningJobSchedule, healthcareJobSchedule } = require('./src/notifications/JobNotifications');
-cleaningJobSchedule(io, userSockets);
-healthcareJobSchedule(io, userSockets);
+const ChatRouter = require('./src/routes/ChatRouter');
+app.use('/api/chat', ChatRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

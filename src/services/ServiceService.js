@@ -28,7 +28,25 @@ class ServiceService {
                 throw new Error("Không tìm thấy thông tin");
             }
 
-            return { uid: uid, ...healthcareDoc.data() };
+            return (new HealthcareServiceModel({ uid: uid, ...healthcareDoc.data() })).getInfo();
+
+        } catch (err) {
+            console.log(err.message);
+            throw new Error("Không tìm thấy thông tin");
+        }
+    }
+
+
+    async getMaintenanceServiceByUID(uid) {
+        try {
+            const maintenanceDoc = await db.collection('maintenanceServices').doc(uid).get();
+
+            if (!maintenanceDoc.exists) {
+                throw new Error("Không tìm thấy thông tin");
+            }
+
+            return (new MaintenanceServiceModel({ uid: uid, ...maintenanceDoc.data() })).getInfo();
+
         } catch (err) {
             console.log(err.message);
             throw new Error("Không tìm thấy thông tin");
@@ -41,13 +59,7 @@ class ServiceService {
             const services = [];
 
             for (const doc of snapshot.docs) {
-                const serviceDoc = new CleaningServiceModel(
-                    doc.id,
-                    doc.data().image,
-                    doc.data().serviceType,
-                    doc.data().serviceName,
-                    doc.data().tasks
-                );
+                const serviceDoc = new CleaningServiceModel({ uid: doc.id, ...doc.data() });
                 const validated = await CleaningServiceValid.validateAsync(serviceDoc.getInfo(), { stripUnknown: true });
                 services.push(validated);
             }
@@ -65,14 +77,7 @@ class ServiceService {
             const services = [];
 
             for (const doc of snapshot.docs) {
-                const serviceDoc = new HealthcareServiceModel(
-                    doc.id,
-                    doc.data().image,
-                    doc.data().serviceType,
-                    doc.data().serviceName,
-                    doc.data().duties,
-                    doc.data().excludedTasks
-                );
+                const serviceDoc = new HealthcareServiceModel({ uid: doc.id, ...doc.data() });
                 const validated = await HealthcareServiceValid.validateAsync(serviceDoc.getInfo(), { stripUnknown: true });
                 services.push(validated);
             }
@@ -90,15 +95,7 @@ class ServiceService {
             const services = [];
 
             for (const doc of snapshot.docs) {
-                const serviceDoc = new MaintenanceServiceModel(
-                    doc.id,
-                    doc.data().image,
-                    doc.data().serviceType,
-                    doc.data().serviceName,
-                    doc.data().powers,
-                    doc.data().isMaintenance,
-                    doc.data().maintenance
-                );
+                const serviceDoc = new MaintenanceServiceModel({ uid: doc.id, ...doc.data() });
                 const validated = await MaintenanceServiceValid.validateAsync(serviceDoc.getInfo(), { stripUnknown: true });
                 services.push(validated);
             }
