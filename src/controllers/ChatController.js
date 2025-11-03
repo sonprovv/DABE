@@ -40,9 +40,14 @@ class ChatController {
             );
             
             console.log('2. Kết quả từ ChatService:', JSON.stringify(messageData, null, 2));
+            
+            // Rename messageId to id in the response
+            const { messageId, ...rest } = messageData;
+            const responseData = { ...rest, id: messageId };
+            
             console.log('\n=== KẾT THÚC XỬ LÝ API GỬI TIN NHẮN ===\n');
             
-            return successDataResponse(res, 200, messageData, 'message');
+            return successDataResponse(res, 200, responseData, 'message');
         } catch (err) {
             console.error('❌ Lỗi khi xử lý API gửi tin nhắn:', err);
             console.error('Stack trace:', err.stack);
@@ -118,32 +123,70 @@ class ChatController {
             const transformedConversations = await Promise.all(conversations.map(async (conv) => {
                 const senderId = conv.otherUserId; // Get the other user's ID
                 
-                // Try to get user info from both users and workers collections
+                // Get user info from both users and workers collections
                 let userDoc = await db.collection('users').doc(senderId).get();
                 let userData = userDoc.data();
+                let userType = 'user';
                 
                 if (!userData) {
                     // If not found in users, try workers collection
                     userDoc = await db.collection('workers').doc(senderId).get();
                     userData = userDoc.data();
+                    userType = 'worker';
+                }
+
+                // Get email from accounts collection
+                let email = '';
+                try {
+                    const accountDoc = await db.collection('accounts').doc(senderId).get();
+                    if (accountDoc.exists) {
+                        email = accountDoc.data().email || '';
+                    }
+                } catch (error) {
+                    console.error('Error fetching email from accounts:', error);
+                }
+
+                // Format date of birth from timestamp to dd/mm/yyyy
+                let formattedDob = null;
+                if (userData?.dob) {
+                    const date = userData.dob.toDate(); // Convert Firestore timestamp to Date
+                    formattedDob = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
                 }
 
                 return {
                     ...conv,
-                    senderId: senderId, // Rename otherUserId to senderId
+                    senderId: senderId,
                     sender: userData ? {
                         id: senderId,
-                        name: userData.username || userData.name || 'Người dùng',
+                        username: userData.username || '',
+                        name: userData.name || 'Người dùng',
                         avatar: userData.photoURL || userData.avatar || '',
-                        email: userData.email || ''
-                    } : null,
-                    // Remove the old otherUserId field to avoid confusion
-                    // otherUserId: undefined
+                        dob: formattedDob,
+                        gender: userData.gender || null,
+                        location: userData.location || null,
+                        tel: userData.tel || userData.phoneNumber || '',
+                        email: email,
+                        userType: userType
+                    } : {
+                        id: senderId,
+                        name: 'Người dùng',
+                        username: '',
+                        avatar: '',
+                        dob: null,
+                        gender: null,
+                        location: null,
+                        tel: '',
+                        email: '',
+                        userType: 'unknown'
+                    }
                 };
             }));
 
-            // Remove undefined fields from the objects
-            const cleanConversations = transformedConversations.map(({ otherUserId, ...rest }) => rest);
+            // Remove undefined fields from the objects and rename conversationId to id
+            const cleanConversations = transformedConversations.map(({ conversationId, otherUserId, ...rest }) => ({
+                ...rest,
+                id: conversationId
+            }));
 
             return successDataResponse(res, 200, cleanConversations, 'conversations');
         } catch (error) {
