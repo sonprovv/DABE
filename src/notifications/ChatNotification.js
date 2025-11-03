@@ -80,7 +80,7 @@ const sendChatNotification = async (senderId, receiverId, message) => {
         console.log('\n5. Chuẩn bị gửi thông báo push...');
         const createChatNotification = (senderId, receiverId, message, timestamp) => {
             return {
-                title: `Tin nhắn mới từ ${senderName}`,
+                title: `${senderName}`,
                 content: message,
                 senderId: senderId,
                 receiverId: receiverId,

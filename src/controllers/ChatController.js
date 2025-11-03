@@ -1,3 +1,4 @@
+const { db } = require('../config/firebase');
 const ChatService = require('../services/ChatService');
 const { successResponse, successDataResponse, failResponse } = require('../utils/response');
 
@@ -108,10 +109,40 @@ class ChatController {
     static async getConversations(req, res) {
         try {
             const userId = req.client.uid;
+            let conversations = await ChatService.getUserConversations(userId);
 
-            const conversations = await ChatService.getUserConversations(userId);
+            // Transform the conversations to include sender information
+            const transformedConversations = await Promise.all(conversations.map(async (conv) => {
+                const senderId = conv.otherUserId; // Get the other user's ID
+                
+                // Try to get user info from both users and workers collections
+                let userDoc = await db.collection('users').doc(senderId).get();
+                let userData = userDoc.data();
+                
+                if (!userData) {
+                    // If not found in users, try workers collection
+                    userDoc = await db.collection('workers').doc(senderId).get();
+                    userData = userDoc.data();
+                }
 
-            return successDataResponse(res, 200, conversations, 'conversations');
+                return {
+                    ...conv,
+                    senderId: senderId, // Rename otherUserId to senderId
+                    sender: userData ? {
+                        id: senderId,
+                        name: userData.username || userData.name || 'Người dùng',
+                        avatar: userData.photoURL || userData.avatar || '',
+                        email: userData.email || ''
+                    } : null,
+                    // Remove the old otherUserId field to avoid confusion
+                    // otherUserId: undefined
+                };
+            }));
+
+            // Remove undefined fields from the objects
+            const cleanConversations = transformedConversations.map(({ otherUserId, ...rest }) => rest);
+
+            return successDataResponse(res, 200, cleanConversations, 'conversations');
         } catch (error) {
             console.error('Error in getConversations:', error);
             return failResponse(res, 500, error.message);
