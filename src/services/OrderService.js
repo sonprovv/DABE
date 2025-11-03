@@ -1,4 +1,6 @@
 const { db } = require("../config/firebase");
+const OrderModel = require("../models/OrderModel");
+const { orderStatusNotification } = require("../notifications/OrderNotification");
 const { formatDate, formatDateAndTime, formatDateAndTimeNow } = require("../utils/formatDate");
 const AccountService = require("./AccountService");
 const JobService = require("./JobService");
@@ -15,6 +17,13 @@ class OrderService {
             console.log(err.message);
             throw new Error("Tạo order không thành công")
         }
+    }
+
+    async getByUID(uid) {
+        const orderDoc = await db.collection('orders').doc(uid).get();
+        if (!orderDoc.exists) throw new Error('Order không tồn tại');
+
+        return { uid: orderDoc.id, ...orderDoc.data() }
     }
 
     async checkOrder(workerID, jobID) {
@@ -57,7 +66,6 @@ class OrderService {
                         price: doc.data().price,
                         status: doc.data().status,
                         isReview: doc.data().isReview,
-                        isPayment: doc.data().isPayment,
                         serviceType: doc.data().serviceType,
                         createdAt: formatDateAndTime(doc.data().createdAt.toDate())
                     }
@@ -72,7 +80,7 @@ class OrderService {
             return orders;
         } catch (err) {
             console.log(err.message);
-            throw new Error("Get order không thành công")
+            throw new Error(err.message)
         }
     }
 
@@ -89,7 +97,6 @@ class OrderService {
                     price: doc.data().price,
                     status: doc.data().status,
                     isReview: doc.data().isReview,
-                    isPayment: doc.data().isPayment,
                     serviceType: doc.data().serviceType,
                     createdAt: formatDateAndTime(doc.data().createdAt.toDate()),
                 }
@@ -104,20 +111,19 @@ class OrderService {
             return orders;
         } catch (err) {
             console.log(err.message);
-            throw new Error("Thất bại")
+            throw new Error(err.message)
         }
     }
 
     async getOrdersByJobID(jobID) {
         try {
             const snapshot = await db.collection('orders').where('jobID', '==', jobID).get();
+
             const orders = [];
             await Promise.all(snapshot.docs.map(async (doc) => {
-                const accountDoc = await AccountService.getByUID(doc.data().workerID);
+                console.log(doc.data())
+                if (doc.data().status!=='Waiting' && doc.data().status!=='Accepted' && doc.data().status!=='Completed') return;
                 const workerDoc = await WorkerService.getByUID(doc.data().workerID);
-                workerDoc['dob'] = formatDate(typeof workerDoc.dob.toDate === 'function' ? workerDoc.dob.toDate() : workerDoc.dob)
-                workerDoc['email'] = accountDoc.email;
-                workerDoc['role'] = accountDoc.role;
 
                 const tmp = {
                     uid: doc.id,
@@ -125,7 +131,6 @@ class OrderService {
                     price: doc.data().price,
                     status: doc.data().status,
                     isReview: doc.data().isReview,
-                    isPayment: doc.data().isPayment,
                     serviceType: doc.data().serviceType,
                     createdAt: formatDateAndTimeNow(doc.data().createdAt.toDate()),
                 }
@@ -141,7 +146,7 @@ class OrderService {
             return orders;
         } catch (err) {
             console.log(err.message);
-            throw new Error("Thất bại")
+            throw new Error(err.message)
         }
     }
 
@@ -151,8 +156,20 @@ class OrderService {
         })
 
         const updatedOrder = await db.collection('orders').doc(uid).get();
+        const order = new OrderModel({ uid: updatedOrder.id, ...updatedOrder.data() })
 
-        return { uid: updatedOrder.id, ...updatedOrder.data() }
+        return order.getInfo()
+    }
+
+    async setRejectOrder(jobID, orderID) {
+        const snapshot = await db.collection('orders').where('jobID', '==', jobID).where('status', '==', 'Waiting').get();
+
+        await Promise.all(snapshot.docs.map(async (doc) => {
+            if (doc.id!==orderID) {
+                const order = await this.putStatusByUID(doc.id, 'Rejected');
+                await orderStatusNotification(order);
+            }
+        }))
     }
 
     async updatePayment(orderID) {

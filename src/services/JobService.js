@@ -17,6 +17,38 @@ class JobService {
         return false;
     }
 
+    async deleteJob(uid, serviceType) {
+        const db_name = `${serviceType.toLowerCase()}Jobs`;
+
+        const jobDoc = await db.collection(db_name).doc(uid).get();
+        const job = jobDoc.data();
+
+        if (serviceType==='HEALTHCARE') {
+            if (Array.isArray(job.services)) {
+                await Promise.all(job.services.map(async (healthcareDetailID) => {
+                    console.log(healthcareDetailID)
+                    await db.collection('healthcareDetails').doc(healthcareDetailID).delete();
+                }))
+            }
+        }
+        else if (serviceType==='MAINTENANCE') {
+            if (Array.isArray(job.services)) {
+                await Promise.all(job.services.forEach(async (maintenanceDetailID) => {
+                    const maintenanceDetails = await db.collection('maintenanceDetails').doc(maintenanceDetailID).get();
+
+                    for (const powerQuantityID of maintenanceDetails.data().powers) {
+                        await db.collection('powerQuantities').doc(powerQuantityID).delete();
+                    }
+
+                    await db.collection('maintenanceDetails').doc(maintenanceDetailID).delete();
+                }))
+            }
+        }
+
+        // await db.collection(db_name).doc(uid).delete();
+        console.log('Delete success');
+    }
+
     async createCleaningJob(validated) {
         try {            
             const newJob = {
@@ -49,7 +81,7 @@ class JobService {
 
             for (const service of validated.services) {
                 const detailRef = await db.collection('healthcareDetails').add({
-                    serviceID: service.serviceID,
+                    serviceID: service.uid,
                     quantity: service.quantity,
                 })
                 healthcareDetailIDs.push(detailRef.id)
@@ -84,13 +116,20 @@ class JobService {
         try {
             const serviceIDs = [];
             for (const service of validated.services) {
-                const powerIDs = [];
+                const powerQuantitesID = [];
                 for (const power of service.powers) {
-                    const powerRef = await db.collection('machineQuantities').add(power);
-                    powerIDs.push(powerRef.id);
+                    const powerRef = await db.collection('powerQuantities').add({
+                        powerID: power.uid,
+                        quantity: power.quantity,
+                        quantityAction: power.quantityAction
+                    })
+                    powerQuantitesID.push(powerRef.id)
                 }
-                const doc = { ...service, powers: powerIDs }
-                const serviceRef = await db.collection('maintenanceJobDetails').add(doc);
+
+                const serviceRef = await db.collection('maintenanceDetails').add({
+                    serviceID: service.uid,
+                    powers: powerQuantitesID
+                })
                 serviceIDs.push(serviceRef.id);
             }
 
@@ -210,7 +249,7 @@ class JobService {
     async getJobsByServiceType(serviceType) {
         try {
             const db_name = `${serviceType.toLowerCase()}Jobs`;
-            const snapshot = await db.collection(db_name).get();
+            const snapshot = await db.collection(db_name).where('status', '==', 'Hiring').get();
 
             const jobs = [];
 
@@ -247,7 +286,7 @@ class JobService {
             for (const healthcareDetailID of healthcareDetails) {
                 const serviceQuantityDoc = await db.collection('healthcareDetails').doc(healthcareDetailID).get();
                 services.push({
-                    serviceID: serviceQuantityDoc.data().serviceID,
+                    uid: serviceQuantityDoc.data().serviceID,
                     quantity: serviceQuantityDoc.data().quantity
                 })
             } 
@@ -259,19 +298,25 @@ class JobService {
         else if (data.serviceType==='MAINTENANCE') {
             const services = [];
             for (const serviceID of data.services) {
-                const details = await db.collection('maintenanceJobDetails').doc(serviceID).get();
+                const details = await db.collection('maintenanceDetails').doc(serviceID).get();
                 if (!details.exists) continue;
 
                 const serviceDetails = details.data();
                 const powerDetails = [];
                 for (const powerID of serviceDetails.powers) {
-                    const power = await db.collection('machineQuantities').doc(powerID).get();
+                    const power = await db.collection('powerQuantities').doc(powerID).get();
                     if (!power.exists) continue;
-                    powerDetails.push(power.data());
+                    powerDetails.push({
+                        uid: power.data().powerID,
+                        quantity: power.data().quantity,
+                        quantityAction: power.data().quantityAction,
+                    });
                 }
 
-                serviceDetails['powers'] = powerDetails;
-                services.push(serviceDetails)
+                services.push({
+                    uid: details.data().serviceID,
+                    powers: powerDetails
+                })
             }
 
             data['services'] = services;

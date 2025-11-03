@@ -41,6 +41,7 @@ const getClient = async (account) => {
 const getMe = async (req, res) => {
     try {
         const { email, password } = req.body;
+
         const response = await axios.post(
             `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FB_API_KEY}`,
             { email, password, returnSecureToken: true }
@@ -53,6 +54,11 @@ const getMe = async (req, res) => {
         const uid = decoded.uid;
 
         const account = await AccountService.getByUID(uid);
+
+        if (account.ban) {
+            return failResponse(res, 500, "Tài khoản bị cấm")
+        }
+
         const currentClient = await getClient(account)
 
         return successDataResponse(res, 200, {
@@ -108,12 +114,14 @@ const loginWithGG = async (req, res) => {
         let currentAccount;
         if (accountDoc.exists) {
             currentAccount = { uid: accountDoc.id, ...accountDoc.data() };
+            if (currentAccount.ban) return failResponse(res, 500, "Tài khoản bị cấm")
         } else {
             const newAccount = new AccountModel({
                 uid: uid,
                 email: email,
                 role: role,
-                provider: 'google.com'
+                provider: 'google.com',
+                ban: false
             })
 
             await AccountService.createAccount(newAccount);
@@ -182,7 +190,8 @@ const createClient = async (req, res) => {
             uid: authAccount.uid,
             email: authAccount.email,
             role: role,
-            provider: 'normal'
+            provider: 'normal',
+            ban: false
         });
 
         const rawClient = {

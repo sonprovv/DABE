@@ -4,7 +4,11 @@ const { OrderCreateValid } = require("../utils/validator/OrderValid");
 
 const { orderStatusNotification } = require("../notifications/OrderNotification");
 const JobService = require("../services/JobService");
+<<<<<<< HEAD
 const ChatService = require("../services/ChatService");
+=======
+const AccountService = require("../services/AccountService");
+>>>>>>> fa9a8772dfd7ac4c64041edd7264c77ced1d1b5d
 
 const createOrder = async (req, res) => {
     try {
@@ -71,19 +75,52 @@ const getOrdersByWorkerID = async (req, res) => {
     }
 }
 
+
+const checkOrderQuantity = async (uid) => {
+    const order = await OrderService.getByUID(uid);
+
+    let workerQuantity = 1;
+    const job = await JobService.getByUID(order.jobID, order.serviceType);
+    
+    if (job.serviceType==='HEALTHCARE') workerQuantity = job.workerQuantity;
+
+    const orders = await OrderService.getOrdersByJobID(job.uid);
+
+    const filterOrders = orders.filter(doc => doc.status==='Accepted');
+
+    if (filterOrders.length<workerQuantity) {
+        if (filterOrders.length+1==workerQuantity) {
+            await OrderService.setRejectOrder(job.uid, order.uid);
+        }
+        return true;
+    }
+    return false;
+}
+
 const putStatusByUID = async (req, res) => {
     try {
+        const clientID = req.client.uid;
         const { uid, status } = req.body;
 
-        if (status!='Accepted' && status!='Rejected') {
+        const account = await AccountService.getByUID(clientID)
+
+        if (status!=='Accepted' && status!=='Rejected' && status!=='Cancel') {
             failResponse(res, 401, 'Sai trạng thái');
         }
 
-        const updatedOrder = await OrderService.putStatusByUID(uid, status);
+        let check = true;
+        if (status==='Accepted') {
+            check = await checkOrderQuantity(uid);
+        }
 
-        console.log(updatedOrder)
-        await orderStatusNotification(updatedOrder);
+        if (status==='Cancel' && account.role==='worker') {
+            const order = await OrderService.getByUID(uid);
+            if (order.status!=='Waiting') {
+                return failResponse(res, 200, 'Bạn không thể hủy order khi không ở trạng thái Chờ (Waiting)')
+            }
+        } 
 
+<<<<<<< HEAD
         // Tự động tạo conversation khi order được chấp nhận
         if (status === 'Accepted') {
             try {
@@ -113,6 +150,15 @@ const putStatusByUID = async (req, res) => {
         }
 
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
+=======
+        if (check) {
+            const updatedOrder = await OrderService.putStatusByUID(uid, status);
+            await orderStatusNotification(updatedOrder);
+
+            return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
+        }
+        else return failResponse(res, 500, 'Số lượng worker đạt giới hạn')
+>>>>>>> fa9a8772dfd7ac4c64041edd7264c77ced1d1b5d
     } catch (err) {
         console.log(err.message);
         return failResponse(res, 500, err.message)

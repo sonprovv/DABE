@@ -5,6 +5,40 @@ const { failResponse, successDataResponse, successResponse } = require("../utils
 const { UserValid, WorkerValid, AdminValid } = require("../utils/validator/ClientValid");
 const { ForgotPasswordValid, ChangePasswordValid } = require("../utils/validator/AuthValid");
 const { auth } = require("../config/firebase");
+const AccountService = require("../services/AccountService");
+const { formatDate } = require("../utils/formatDate");
+
+const getClients = async (req, res) => {
+    try {
+        const accounts = await AccountService.getAccounts();
+
+        const users = [];
+        const workers = [];
+        const admins = [];
+        await Promise.all(accounts.map(async (account) => {
+            try {
+                if (account.role==='user') {
+                    const user = await UserService.getByUID(account.uid);
+                    users.push({ ...user, ban: account.ban });
+                }
+                else if (account.role==='worker') {
+                    const worker = await WorkerService.getByUID(account.uid);
+                    workers.push({ ...worker, ban: account.ban });
+                }
+                else if (account.role==='admin') {
+                    const admin = await AdminService.getByUID(account.uid);
+                    admins.push({ ...admin, ban: account.ban });
+                }
+            } catch (err) {
+                return;
+            }
+        }))
+
+        return successDataResponse(res, 200, { admins: admins, users: users, workers: workers });
+    } catch (err) {
+        return failResponse(res, 500, err.message)
+    }
+}
 
 const forgotPassword = async (req, res) => {
     try {
@@ -52,12 +86,13 @@ const updateClient = async (req, res) => {
         }
         else if (req.body.role==='worker') {
             const validated = await WorkerValid.validateAsync(rawData, { stripUnknown: true });
-            clientData = await WorkerService.updateUser(validated);
+            clientData = await WorkerService.updateWorker(validated);
         }
         else if (req.body.role==='admin') {
             const validated = await AdminValid.validateAsync(rawData, { stripUnknown: true });
             clientData = await AdminService.updateAdmin(validated);
         }
+        clientData['dob'] = formatDate(typeof clientData['dob']==='function' ? clientData['dob'].toDate() : clientData['dob'])
         clientData["email"] = req.body.email;
         clientData["role"] = req.body.role;
         return successDataResponse(res, 200, clientData, 'user')
@@ -67,6 +102,7 @@ const updateClient = async (req, res) => {
 }
 
 module.exports = {
+    getClients,
     forgotPassword,
     changePassword,
     updateClient,

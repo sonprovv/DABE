@@ -45,8 +45,27 @@ app.use('/api/notifications', NotificationRouter);
 const PaymentRouter = require('./src/routes/PaymentRouter');
 app.use('/api/payments', PaymentRouter);
 
+<<<<<<< HEAD
 const AIRouter = require('./src/routes/AIRouter');
 app.use('/api/ai', AIRouter);
+=======
+const PolicyRouter = require('./src/routes/PolicyRouter');
+app.use('/api/policies', PolicyRouter);
+
+const ChatBotRouter = require('./src/routes/ChatBotRouter');
+app.use('/api/chatbot', ChatBotRouter);
+
+const { cleaningJobSchedule, healthcareJobSchedule } = require('./src/notifications/JobNotifications');
+const { checkCleaningJob, checkHealthcareJob, checkMaintenanceJob } = require('./src/notifications/JobCancel');
+
+// Promise.all([
+//     cleaningJobSchedule(),
+//     healthcareJobSchedule(),
+//     checkCleaningJob(),
+//     checkHealthcareJob(),
+//     checkMaintenanceJob()
+// ])
+>>>>>>> fa9a8772dfd7ac4c64041edd7264c77ced1d1b5d
 
 const HealthRouter = require('./src/routes/HealthRouter');
 app.use('/api', HealthRouter);
