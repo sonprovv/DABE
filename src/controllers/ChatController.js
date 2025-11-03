@@ -7,31 +7,46 @@ class ChatController {
      * POST /api/chat/send
      */
     static async sendMessage(req, res) {
+        console.log('\n=== BẮT ĐẦU XỬ LÝ API GỬI TIN NHẮN ===');
+        console.log('Thời gian:', new Date().toISOString());
+        console.log('Headers:', JSON.stringify(req.headers, null, 2));
+        console.log('Body:', JSON.stringify(req.body, null, 2));
+        
         try {
             const senderId = req.client.uid; // Lấy từ token
+            console.log('Sender ID từ token:', senderId);
+            
             const { receiverId, message, type } = req.body;
+            console.log('Dữ liệu nhận được:', { receiverId, message, type });
 
             if (!receiverId || !message) {
-                return failResponse(res, 400, 'receiverId and message are required');
+                const errorMsg = 'receiverId and message are required';
+                console.error('❌ Lỗi:', errorMsg);
+                return failResponse(res, 400, errorMsg);
             }
 
-            // Kiểm tra xem có order được chấp nhận không
-            const hasAcceptedOrder = await ChatService.checkAcceptedOrder(senderId, receiverId);
-            if (!hasAcceptedOrder) {
-                return failResponse(res, 403, 'Bạn chỉ có thể chat với worker/user khi có order được chấp nhận');
-            }
+            // const hasAcceptedOrder = await ChatService.checkAcceptedOrder(senderId, receiverId);
+            // if (!hasAcceptedOrder) {
+            //     return failResponse(res, 403, 'Bạn chỉ có thể chat với worker/user khi có order được chấp nhận');
+            // }
 
+            console.log('\n1. Bắt đầu gửi tin nhắn qua ChatService...');
             const messageData = await ChatService.sendMessage(
                 senderId,
                 receiverId,
                 message,
                 type || 'text'
             );
-
-            return successDataResponse(res, 201, messageData, 'message');
-        } catch (error) {
-            console.error('Error in sendMessage:', error);
-            return failResponse(res, 500, error.message);
+            
+            console.log('2. Kết quả từ ChatService:', JSON.stringify(messageData, null, 2));
+            console.log('\n=== KẾT THÚC XỬ LÝ API GỬI TIN NHẮN ===\n');
+            
+            return successDataResponse(res, 200, messageData, 'message');
+        } catch (err) {
+            console.error('❌ Lỗi khi xử lý API gửi tin nhắn:', err);
+            console.error('Stack trace:', err.stack);
+            console.log('\n=== LỖI KHI XỬ LÝ API GỬI TIN NHẮN ===\n');
+            return failResponse(res, 500, 'Gửi tin nhắn thất bại: ' + err.message);
         }
     }
 

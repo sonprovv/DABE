@@ -61,9 +61,12 @@ class ChatService {
      * @returns {Promise<Object>} Message data
      */
     static async sendMessage(senderId, receiverId, message, type = 'text') {
+        console.log('ChatService.sendMessage - Bắt đầu gửi tin nhắn', { senderId, receiverId, message, type });
+        
         try {
             const conversationId = this.getConversationId(senderId, receiverId);
             const messageRef = realtimeDb.ref(`conversations/${conversationId}/messages`).push();
+            const timestamp = Date.now();
             
             const messageData = {
                 messageId: messageRef.key,
@@ -71,35 +74,47 @@ class ChatService {
                 receiverId,
                 message,
                 type,
-                timestamp: Date.now(),
+                timestamp: timestamp,
                 isRead: false,
                 createdAt: new Date().toISOString()
             };
 
+            console.log('ChatService - Lưu tin nhắn vào database:', messageData);
             await messageRef.set(messageData);
 
             // Cập nhật thông tin conversation
-            await realtimeDb.ref(`conversations/${conversationId}/info`).set({
+            const conversationUpdate = {
                 participants: [senderId, receiverId],
                 lastMessage: message,
-                lastMessageTime: Date.now(),
+                lastMessageTime: timestamp,
                 lastMessageSender: senderId,
                 updatedAt: new Date().toISOString()
-            });
+            };
+            
+            console.log('ChatService - Cập nhật thông tin cuộc hội thoại:', conversationUpdate);
+            await realtimeDb.ref(`conversations/${conversationId}/info`).set(conversationUpdate);
+
+            // Gửi thông báo push
+            console.log('ChatService - Chuẩn bị gửi thông báo push');
+            const { sendChatNotification } = require('../notifications/ChatNotification');
+            await sendChatNotification(senderId, receiverId, message, type);
+            console.log('ChatService - Đã gửi yêu cầu thông báo');
 
             // Cập nhật danh sách conversations cho mỗi user
             await Promise.all([
                 realtimeDb.ref(`userConversations/${senderId}/${conversationId}`).set({
                     otherUserId: receiverId,
                     lastMessage: message,
-                    lastMessageTime: Date.now(),
-                    unreadCount: 0
+                    lastMessageTime: timestamp,
+                    unreadCount: 0,
+                    updatedAt: new Date().toISOString()
                 }),
                 realtimeDb.ref(`userConversations/${receiverId}/${conversationId}`).update({
                     otherUserId: senderId,
                     lastMessage: message,
-                    lastMessageTime: Date.now(),
-                    unreadCount: admin.database.ServerValue.increment(1)
+                    lastMessageTime: timestamp,
+                    unreadCount: admin.database.ServerValue.increment(1),
+                    updatedAt: new Date().toISOString()
                 })
             ]);
 

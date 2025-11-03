@@ -1,4 +1,4 @@
-const { db } = require("../config/firebase");
+const { db, realtimeDb } = require("../config/firebase");
 const { findDevices } = require("./tool");
 
 /**
@@ -6,50 +6,112 @@ const { findDevices } = require("./tool");
  * @param {string} senderId - ID người gửi
  * @param {string} receiverId - ID người nhận
  * @param {string} message - Nội dung tin nhắn
- * @param {string} type - Loại tin nhắn (text, image, file)
  */
-const sendChatNotification = async (senderId, receiverId, message, type = 'text') => {
+const sendChatNotification = async (senderId, receiverId, message) => {
+    console.log('=== BẮT ĐẦU GỬI THÔNG BÁO TIN NHẮN ===');
+    console.log(`Người gửi: ${senderId}`);
+    console.log(`Người nhận: ${receiverId}`);
+    console.log(`Nội dung: ${message}`);
+    
     try {
-        // Lấy thông tin người gửi
-        const senderDoc = await db.collection('users').doc(senderId).get();
-        if (!senderDoc.exists) return;
-
-        const senderData = senderDoc.data();
-        const senderName = senderData.name || senderData.email || 'Người dùng';
-        const senderAvatar = senderData.avatar || senderData.photoURL || '';
-
-        // Tạo nội dung thông báo
-        let notificationContent = message;
-        if (type === 'image') {
-            notificationContent = '📷 Đã gửi một hình ảnh';
-        } else if (type === 'file') {
-            notificationContent = '📎 Đã gửi một file';
+        // Lấy thông tin người gửi từ collection users
+        console.log('\n1. Đang tìm thông tin người gửi...');
+        let senderDoc = await db.collection('users').doc(senderId).get();
+        let senderData = null;
+        let userType = 'user';
+        
+        // Nếu không tìm thấy trong users, thử tìm trong workers
+        if (!senderDoc.exists) {
+            console.log('   Không tìm thấy trong users, đang tìm trong workers...');
+            senderDoc = await db.collection('workers').doc(senderId).get();
+            if (!senderDoc.exists) {
+                console.error('❌ Lỗi: Không tìm thấy thông tin người gửi trong cả 2 collection');
+                return;
+            }
+            userType = 'worker';
+            senderData = senderDoc.data();
+        } else {
+            senderData = senderDoc.data();
         }
 
-        // Tạo thông báo trong Firestore
-        const notify = {
-            title: `Tin nhắn mới từ ${senderName}`,
-            content: notificationContent,
-            isRead: false,
-            createdAt: new Date(),
-            notificationType: 'Chat',
+        console.log(`   Đã tìm thấy người gửi trong collection ${userType}`);
+        const senderName = senderData.username || senderData.name || senderData.email || 'Người dùng';
+        const senderAvatar = senderData.avatar || senderData.photoURL || '';
+        const timestamp = Date.now();
+        const chatId = [senderId, receiverId].sort().join('_');
+        
+        console.log('\n2. Thông tin người gửi:');
+        console.log(`   - Tên: ${senderName}`);
+        console.log(`   - Avatar: ${senderAvatar ? 'Có' : 'Không có'}`);
+        console.log(`   - Chat ID: ${chatId}`);
+
+        // Tạo thông báo
+        const messageData = {
+            message: message,
             senderId: senderId,
             senderName: senderName,
             senderAvatar: senderAvatar,
-            messageType: type
+            timestamp: timestamp,
+            isRead: false
         };
 
-        await db.collection('notifications').add({
-            ...notify,
-            clientID: receiverId
-        });
+        // Lưu tin nhắn vào Realtime Database
+        console.log('\n3. Đang lưu tin nhắn vào Realtime Database...');
+        const messageRef = realtimeDb.ref(`chats/${chatId}/messages`).push();
+        await messageRef.set(messageData);
+        console.log('   ✅ Đã lưu tin nhắn vào Realtime Database');
 
-        // Gửi FCM notification
+        // Cập nhật thông tin cuộc hội thoại
+        console.log('\n4. Đang cập nhật thông tin cuộc hội thoại...');
+        const conversationUpdate = {
+            lastMessage: message,
+            lastMessageTime: timestamp,
+            lastMessageSender: senderId,
+            [`participants/${senderId}`]: true,
+            [`participants/${receiverId}`]: true,
+            [`userNames/${senderId}`]: senderName,
+            [`userAvatars/${senderId}`]: senderAvatar
+        };
+        
+        await realtimeDb.ref(`conversations/${chatId}`).update(conversationUpdate);
+        console.log('   ✅ Đã cập nhật thông tin cuộc hội thoại');
+
+        // Gửi thông báo push
+        console.log('\n5. Chuẩn bị gửi thông báo push...');
+        const createChatNotification = (senderId, receiverId, message, timestamp) => {
+            return {
+                title: `Tin nhắn mới từ ${senderName}`,
+                content: message,
+                senderId: senderId,
+                receiverId: receiverId,
+                chatId: chatId,
+                timestamp: timestamp,
+                isRead: false,
+                createdAt: new Date().toISOString(),
+                notificationType: 'chat',
+                data: {
+                    type: 'chat',
+                    senderId: senderId,
+                    chatId: chatId,
+                    message: message,
+                    timestamp: timestamp,
+                    isRead: false
+                }
+            };
+        };
+        
+        const notify = createChatNotification(senderId, receiverId, message, timestamp);
+
+        console.log('   Thông tin thông báo:', JSON.stringify(notify, null, 2));
+        console.log(`\n6. Đang gửi thông báo đến thiết bị của người nhận (${receiverId})...`);
         await findDevices(receiverId, notify);
+        console.log('   ✅ Đã gửi yêu cầu thông báo');
+        console.log('\n=== KẾT THÚC GỬI THÔNG BÁO TIN NHẮN ===\n');
 
     } catch (error) {
-        console.error('Error sending chat notification:', error);
-        // Không throw error để không ảnh hưởng đến việc gửi tin nhắn
+        console.error('❌ Lỗi khi gửi thông báo chat:', error);
+        console.error('Chi tiết lỗi:', error.stack);
+        console.log('\n=== LỖI KHI GỬI THÔNG BÁO TIN NHẮN ===\n');
     }
 };
 

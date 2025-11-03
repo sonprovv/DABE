@@ -4,32 +4,32 @@ const { failResponse, successDataResponse } = require("../utils/response");
 const { CleaningJobCreateValid, HealthcareJobCreateValid, MaintenanceJobCreateValid } = require("../utils/validator/JobValid");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
 const ServiceService = require('../services/ServiceService');
-const { jobEmbedding } = require('../ai/Embedding');
+// const { jobEmbedding } = require('../ai/Embedding');
 
 dayjs.extend(customParseFormat);
 
-const jobEmbed = async (job) => {
-    if (job.serviceType==='HEALTHCARE') {
-        job.services = await Promise.all(job.services.map(async (service) => {
-            const doc = await ServiceService.getHealthcareServiceByUID(service.serviceID);
-            return {
-                ...service,
-                serviceName: doc.serviceName
-            }
-        }))
-    }
-    else if (job.serviceType==='MAINTENANCE') {
-        job.services = await Promise.all(job.services.map(async (service) => {
-            const doc = await ServiceService.getMaintenanceServiceByUID(service.uid);
-            return {
-                ...service,
-                serviceName: doc.serviceName
-            }
-        }))
-    }
+// const jobEmbed = async (job) => {
+//     if (job.serviceType==='HEALTHCARE') {
+//         job.services = await Promise.all(job.services.map(async (service) => {
+//             const doc = await ServiceService.getHealthcareServiceByUID(service.serviceID);
+//             return {
+//                 ...service,
+//                 serviceName: doc.serviceName
+//             }
+//         }))
+//     }
+//     else if (job.serviceType==='MAINTENANCE') {
+//         job.services = await Promise.all(job.services.map(async (service) => {
+//             const doc = await ServiceService.getMaintenanceServiceByUID(service.uid);
+//             return {
+//                 ...service,
+//                 serviceName: doc.serviceName
+//             }
+//         }))
+//     }
 
-    return await jobEmbedding(job);
-}
+//     return await jobEmbedding(job);
+// }
 
 const createJob = async (req, res) => {
     try {
