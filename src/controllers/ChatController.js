@@ -93,7 +93,10 @@ class ChatController {
                 return failResponse(res, 400, 'userId is required');
             }
 
-            const messages = await ChatService.getMessages(currentUserId, userId, limit);
+            let messages = await ChatService.getMessages(currentUserId, userId, limit);
+            
+            // Remove messageId from each message
+            messages = messages.map(({ messageId, ...rest }) => rest);
 
             return successDataResponse(res, 200, messages, 'messages');
         } catch (error) {

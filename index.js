@@ -45,10 +45,7 @@ app.use('/api/notifications', NotificationRouter);
 const PaymentRouter = require('./src/routes/PaymentRouter');
 app.use('/api/payments', PaymentRouter);
 
-<<<<<<< HEAD
-const AIRouter = require('./src/routes/AIRouter');
-app.use('/api/ai', AIRouter);
-=======
+
 const PolicyRouter = require('./src/routes/PolicyRouter');
 app.use('/api/policies', PolicyRouter);
 
@@ -65,7 +62,6 @@ const { checkCleaningJob, checkHealthcareJob, checkMaintenanceJob } = require('.
 //     checkHealthcareJob(),
 //     checkMaintenanceJob()
 // ])
->>>>>>> fa9a8772dfd7ac4c64041edd7264c77ced1d1b5d
 
 const HealthRouter = require('./src/routes/HealthRouter');
 app.use('/api', HealthRouter);

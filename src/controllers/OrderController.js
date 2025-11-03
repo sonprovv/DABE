@@ -4,11 +4,7 @@ const { OrderCreateValid } = require("../utils/validator/OrderValid");
 
 const { orderStatusNotification } = require("../notifications/OrderNotification");
 const JobService = require("../services/JobService");
-<<<<<<< HEAD
 const ChatService = require("../services/ChatService");
-=======
-const AccountService = require("../services/AccountService");
->>>>>>> fa9a8772dfd7ac4c64041edd7264c77ced1d1b5d
 
 const createOrder = async (req, res) => {
     try {
@@ -120,7 +116,6 @@ const putStatusByUID = async (req, res) => {
             }
         } 
 
-<<<<<<< HEAD
         // Tự động tạo conversation khi order được chấp nhận
         if (status === 'Accepted') {
             try {
@@ -150,15 +145,6 @@ const putStatusByUID = async (req, res) => {
         }
 
         return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
-=======
-        if (check) {
-            const updatedOrder = await OrderService.putStatusByUID(uid, status);
-            await orderStatusNotification(updatedOrder);
-
-            return successDataResponse(res, 200, updatedOrder, 'updatedOrder');
-        }
-        else return failResponse(res, 500, 'Số lượng worker đạt giới hạn')
->>>>>>> fa9a8772dfd7ac4c64041edd7264c77ced1d1b5d
     } catch (err) {
         console.log(err.message);
         return failResponse(res, 500, err.message)

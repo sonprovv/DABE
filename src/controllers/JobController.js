@@ -3,43 +3,13 @@ const JobService = require("../services/JobService");
 const { failResponse, successDataResponse, successResponse } = require("../utils/response");
 const { CleaningJobCreateValid, HealthcareJobCreateValid, MaintenanceJobCreateValid } = require("../utils/validator/JobValid");
 const customParseFormat = require("dayjs/plugin/customParseFormat");
-<<<<<<< HEAD
-const ServiceService = require('../services/ServiceService');
-// const { jobEmbedding } = require('../ai/Embedding');
 
-dayjs.extend(customParseFormat);
-
-// const jobEmbed = async (job) => {
-//     if (job.serviceType==='HEALTHCARE') {
-//         job.services = await Promise.all(job.services.map(async (service) => {
-//             const doc = await ServiceService.getHealthcareServiceByUID(service.serviceID);
-//             return {
-//                 ...service,
-//                 serviceName: doc.serviceName
-//             }
-//         }))
-//     }
-//     else if (job.serviceType==='MAINTENANCE') {
-//         job.services = await Promise.all(job.services.map(async (service) => {
-//             const doc = await ServiceService.getMaintenanceServiceByUID(service.uid);
-//             return {
-//                 ...service,
-//                 serviceName: doc.serviceName
-//             }
-//         }))
-//     }
-
-//     return await jobEmbedding(job);
-// }
-
-=======
 const OrderService = require('../services/OrderService');
 const { saveAndSendNotification, createNotify } = require('../notifications/tool');
 const { deleteJob } = require('../ai/Embedding');
 
 dayjs.extend(customParseFormat);
 
->>>>>>> fa9a8772dfd7ac4c64041edd7264c77ced1d1b5d
 const createJob = async (req, res) => {
     try {
         const { serviceType } = req.params;
