@@ -18,13 +18,13 @@ const sendNotification = async (roomId, message) => {
     console.log(`💬 New ${type} message from ${senderId} → ${receiverId}`);
 
     // Lấy thông tin người gửi
-    const senderSnap = await db.ref(`users/${senderId}`).once('value');
-    const senderData = senderSnap.val();
+    const senderSnap = await db.collection(`users`).doc(senderId).get();
+    const senderData = senderSnap.data();
     const senderName = senderData?.displayName || 'Ai đó';
 
     // Lấy FCM token của người nhận
-    const tokenSnap = await db.ref(`devices/${receiverId}`).once("value");
-    const tokens = tokenSnap.val();
+    const tokenSnap = await db.collection(`devices`).doc(receiverId).get();
+    const tokens = tokenSnap.data();
 
     if (!tokens) {
       console.log(`⚠️ User ${receiverId} has no FCM token`);
