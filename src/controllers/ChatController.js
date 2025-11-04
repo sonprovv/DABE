@@ -1,7 +1,6 @@
 const { db } = require('../config/firebase');
 const ChatService = require('../services/ChatService');
 const { successResponse, successDataResponse, failResponse } = require('../utils/response');
-const { getIO } = require('../config/socket');
 
 class ChatController {
     /**
