@@ -1,6 +1,7 @@
 const { db } = require('../config/firebase');
 const ChatService = require('../services/ChatService');
 const { successResponse, successDataResponse, failResponse } = require('../utils/response');
+const { getIO } = require('../config/socket');
 
 class ChatController {
     /**
@@ -44,6 +45,11 @@ class ChatController {
             // Rename messageId to id in the response
             const { messageId, ...rest } = messageData;
             const responseData = { ...rest, id: messageId };
+            
+            // Emit new message event to the conversation room
+            const io = getIO();
+            const conversationId = ChatService.getConversationId(senderId, receiverId);
+            io.to(conversationId).emit('new_message', responseData);
             
             console.log('\n=== KẾT THÚC XỬ LÝ API GỬI TIN NHẮN ===\n');
             
