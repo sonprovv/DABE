@@ -1,4 +1,4 @@
-import { db, fcm, realtimeDb } from "./firebase.js";
+const { db, realtimeDb, messaging, FieldValue } = require("./firebase.js");
 
 console.log("🚀 Chat listener started...");
 
@@ -6,9 +6,12 @@ const conversationsRef = realtimeDb.ref("conversations");
 const activeListeners = new Map();
 
 // Hàm gửi thông báo
-const sendNotification = async (roomId, message) => {
+const sendNotification = async (roomId, mes) => {
   try {
-    const { senderId, receiverId, content, type = 'text' } = message;
+    const senderId = mes.senderId;
+    const receiverId = mes.receiverId;
+    const content = mes.message;
+    const {  type = 'text' } = mes;
     
     if (!senderId || !receiverId) {
       console.error("❌ Missing senderId or receiverId in message");
@@ -17,10 +20,23 @@ const sendNotification = async (roomId, message) => {
 
     console.log(`💬 New ${type} message from ${senderId} → ${receiverId}`);
 
-    // Lấy thông tin người gửi
-    const senderSnap = await db.collection(`users`).doc(senderId).get();
-    const senderData = senderSnap.data();
-    const senderName = senderData?.displayName || 'Ai đó';
+    // Lấy thông tin người gửi từ users, nếu không có thì fallback sang workers
+    let senderName = 'Ai đó';
+    try {
+      const senderSnap = await db.collection('users').doc(senderId).get();
+      const senderData = senderSnap.exists ? senderSnap.data() : null;
+      if (senderData) {
+        senderName = senderData.username || senderData.displayName || senderData.name || senderName;
+      } else {
+        const workerSnap = await db.collection('workers').doc(senderId).get();
+        const workerData = workerSnap.exists ? workerSnap.data() : null;
+        if (workerData) {
+          senderName = workerData.username || workerData.displayName || workerData.name || senderName;
+        }
+      }
+    } catch (e) {
+      console.error('⚠️ Error fetching sender profile:', e.message);
+    }
 
     // Lấy FCM token của người nhận
     const tokenSnap = await db.collection(`devices`).doc(receiverId).get();
@@ -31,17 +47,25 @@ const sendNotification = async (roomId, message) => {
       return;
     }
 
-    // Tạo nội dung thông báo
+    // Tạo nội dung thông báo với fallback an toàn
+    const fallbackBody = 'Bạn có tin nhắn mới';
     let notificationBody = '';
-    switch(type) {
+    switch (type) {
       case 'image':
         notificationBody = '📷 Đã gửi một hình ảnh';
         break;
       case 'file':
         notificationBody = '📄 Đã gửi một tệp tin';
         break;
-      default:
-        notificationBody = content?.length > 50 ? `${content.substring(0, 50)}...` : content;
+      default: {
+        const text = typeof content === 'string' ? content.trim() : '';
+        if (text.length > 0) {
+          notificationBody = text.length > 50 ? `${text.substring(0, 50)}...` : text;
+        } else {
+          notificationBody = fallbackBody;
+        }
+        break;
+      }
     }
 
     // Tạo payload gửi FCM
@@ -49,8 +73,6 @@ const sendNotification = async (roomId, message) => {
       notification: {
         title: `${senderName}`,
         body: notificationBody,
-        sound: 'default',
-        badge: '1',
       },
       data: {
         type: 'new_message',
@@ -62,8 +84,14 @@ const sendNotification = async (roomId, message) => {
       },
       android: {
         priority: 'high',
+        notification: {
+          sound: 'default',
+        },
       },
       apns: {
+        headers: {
+          'apns-priority': '10',
+        },
         payload: {
           aps: {
             sound: 'default',
@@ -74,29 +102,77 @@ const sendNotification = async (roomId, message) => {
     };
 
     // Gửi FCM đến tất cả các thiết bị của người nhận
-    const tokenEntries = Object.entries(tokens);
-    const sendPromises = tokenEntries.map(async ([tokenId, tokenData]) => {
-      try {
-        await fcm.sendToDevice(tokenData.token, payload);
-        console.log(`📩 Sent push to ${receiverId} (${tokenId})`);
-      } catch (error) {
-        console.error(`❌ Error sending to token ${tokenId}:`, error.message);
-        // Xóa token không hợp lệ
-        if (error.code === 'messaging/registration-token-not-registered') {
-          await db.ref(`devices/${receiverId}/${tokenId}`).remove();
-          console.log(`🗑️ Removed invalid token: ${tokenId}`);
-        }
+    const tokenList = Array.isArray(tokens.devices) ? tokens.devices : [];
+    if (tokenList.length === 0) {
+      console.log(`⚠️ User ${receiverId} has empty devices list`);
+      return;
+    }
+
+    const message = {
+      tokens: tokenList,
+      notification: payload.notification,
+      data: payload.data,
+      android: payload.android,
+      apns: payload.apns,
+    };
+
+    // Log nội dung thông báo trước khi gửi
+    // console.log('📦 FCM payload:', {
+    //   to: receiverId,
+    //   tokens: tokenList,
+    //   notification: payload.notification,
+    //   data: payload.data,
+    // });
+
+    const resp = await messaging.sendEachForMulticast(message);
+    console.log(`📨 FCM multicast: success=${resp.successCount} failure=${resp.failureCount}`);
+
+    // Log chi tiết từng token
+    const successTokens = [];
+    const failedTokens = [];
+    resp.responses.forEach((r, idx) => {
+      const t = tokenList[idx];
+      if (r.success) {
+        // console.log(`✅ Token OK: ${t}`);
+        successTokens.push(t);
+      } else {
+        const code = r.error?.code || 'unknown';
+        const msg = r.error?.message || 'no message';
+        console.error(`❌ Token FAIL: ${t} | code=${code} | message=${msg}`);
+        failedTokens.push({ token: t, code, msg });
       }
     });
 
-    await Promise.all(sendPromises);
+    if (successTokens.length > 0) {
+      console.log(`🎉 Sent notification successfully to ${successTokens.length} device(s) for user ${receiverId}`);
+    }
+
+    // Xử lý các token thất bại -> loại khỏi Firestore
+    if (resp.failureCount > 0) {
+      const invalidTokens = resp.responses
+        .map((r, idx) => ({ r, token: tokenList[idx] }))
+        .filter(x => !x.r.success && x.r.error && (
+          x.r.error.code === 'messaging/registration-token-not-registered' ||
+          x.r.error.code === 'messaging/invalid-registration-token' ||
+          x.r.error.code === 'messaging/sender-id-mismatch' ||
+          x.r.error.code === 'messaging/mismatched-credential'
+        ))
+        .map(x => x.token);
+
+      if (invalidTokens.length > 0) {
+        await db.collection('devices').doc(receiverId).update({
+          devices: FieldValue.arrayRemove(...invalidTokens)
+        });
+        console.log(`🗑️ Removed ${invalidTokens.length} invalid tokens from Firestore`);
+      }
+    }
   } catch (error) {
     console.error('❌ Error in sendNotification:', error);
   }
 };
 
 // Xử lý khi có conversation mới
-export const setupConversationListener = () => {
+const setupConversationListener = () => {
   console.log('🔊 Setting up conversation listeners...');
   
   // Lắng nghe khi có conversation mới
@@ -111,7 +187,7 @@ export const setupConversationListener = () => {
     console.log(`👂 Listening to room: ${roomId}`);
     
     // Tạo reference đến messages của room
-    const messagesRef = db.ref(`conversations/${roomId}/messages`);
+    const messagesRef = realtimeDb.ref(`conversations/${roomId}`);
     
     // Hàm xử lý tin nhắn mới
     const handleNewMessage = (msgSnap) => {
@@ -134,7 +210,7 @@ export const setupConversationListener = () => {
 };
 
 // Hàm dọn dẹp listeners
-export const cleanupListeners = () => {
+const cleanupListeners = () => {
   console.log('🧹 Cleaning up listeners...');
   
   // Hủy tất cả listeners
@@ -150,6 +226,8 @@ export const cleanupListeners = () => {
   conversationsRef.off("child_added");
 };
 
+module.exports = { setupConversationListener, cleanupListeners };
+
 // Xử lý tắt ứng dụng
 process.on('SIGINT', () => {
   console.log('\n🛑 Shutting down gracefully...');
@@ -157,5 +235,5 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-// Khởi động listener
-setupConversationListener();
+// Khởi động listener (để tránh duplicate, chỉ nên gọi trong index.js)
+// setupConversationListener();

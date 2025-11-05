@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-const { setupConversationListener } = require('./src/config/listener');
+const { setupConversationListener } = require('./src/config/listener.js');
 
 const app = express();
 const server = http.createServer(app);

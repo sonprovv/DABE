@@ -16,5 +16,7 @@ const auth = admin.auth();
 const db = admin.firestore();
 const realtimeDb = admin.database();
 const Timestamp = admin.firestore.Timestamp;
+const FieldValue = admin.firestore.FieldValue;
+const messaging = admin.messaging();
 
-module.exports = { db, auth, admin, Timestamp, realtimeDb };
+module.exports = { db, auth, admin, Timestamp, FieldValue, realtimeDb, messaging };
