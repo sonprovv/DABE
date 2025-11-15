@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
-const { setupConversationListener } = require('./src/config/listener.js');
 
 const app = express();
 const server = http.createServer(app);
@@ -59,23 +58,19 @@ app.use('/api/chatbot', ChatBotRouter);
 const { cleaningJobSchedule, healthcareJobSchedule } = require('./src/notifications/JobNotifications');
 const { checkCleaningJob, checkHealthcareJob, checkMaintenanceJob } = require('./src/notifications/JobCancel');
 
-// Promise.all([
-//     cleaningJobSchedule(),
-//     healthcareJobSchedule(),
-//     checkCleaningJob(),
-//     checkHealthcareJob(),
-//     checkMaintenanceJob()
-// ])
+Promise.all([
+    cleaningJobSchedule(),
+    healthcareJobSchedule(),
+    checkCleaningJob(),
+    checkHealthcareJob(),
+    checkMaintenanceJob()
+])
 
 const HealthRouter = require('./src/routes/HealthRouter');
 app.use('/api', HealthRouter);
 
 const ChatRouter = require('./src/routes/ChatRouter');
 app.use('/api/chat', ChatRouter);
-
-// Khởi tạo listener cho tin nhắn
-setupConversationListener();
-console.log('🔊 Message listener initialized');
 
 const PORT = 5000;
 server.listen(PORT, () => {

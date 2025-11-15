@@ -46,11 +46,11 @@ const search = async (req, res ) => {
         console.log(process.env.AI_URL)
 
         const response = await axios.post(
-            `${process.env.AI_URL}/chatbot`, 
+            `${process.env.AI_URL}/api/chatbot`, 
             { query: query, reference: reference },
             {
                 headers: {
-                    'Content-Type': 'apllication/json; charset=utf-8',
+                    'Content-Type': 'application/json; charset=utf-8',
                 },
                 transformRequest: [(data, headers) => {
                     return JSON.stringify(data)

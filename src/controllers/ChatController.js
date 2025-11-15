@@ -43,11 +43,15 @@ class ChatController {
             
             // Rename messageId to id in the response
             const { messageId, ...rest } = messageData;
-            const responseData = { ...rest, id: messageId };
+            const conversationId = ChatService.getConversationId(senderId, receiverId);
+            const responseData = { 
+                ...rest, 
+                id: messageId,
+                conversationId: conversationId  // Thêm conversationId vào response
+            };
             
             // Emit new message event to the conversation room
             const io = getIO();
-            const conversationId = ChatService.getConversationId(senderId, receiverId);
             io.to(conversationId).emit('new_message', responseData);
             
             console.log('\n=== KẾT THÚC XỬ LÝ API GỬI TIN NHẮN ===\n');

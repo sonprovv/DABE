@@ -7,7 +7,7 @@ const activeListeners = new Map();
 
 // Hàm gửi thông báo
 const sendNotification = async (roomId, mes) => {
-  try {
+    try {
     const senderId = mes.senderId;
     const receiverId = mes.receiverId;
     const content = mes.message;
@@ -33,7 +33,7 @@ const sendNotification = async (roomId, mes) => {
         if (workerData) {
           senderName = workerData.username || workerData.displayName || workerData.name || senderName;
         }
-      }
+        }
     } catch (e) {
       console.error('⚠️ Error fetching sender profile:', e.message);
     }
@@ -44,62 +44,118 @@ const sendNotification = async (roomId, mes) => {
 
     if (!tokens) {
       console.log(`⚠️ User ${receiverId} has no FCM token`);
-      return;
-    }
+            return;
+        }
 
     // Tạo nội dung thông báo với fallback an toàn
     const fallbackBody = 'Bạn có tin nhắn mới';
     let notificationBody = '';
-    switch (type) {
-      case 'image':
-        notificationBody = '📷 Đã gửi một hình ảnh';
-        break;
-      case 'file':
-        notificationBody = '📄 Đã gửi một tệp tin';
-        break;
+        switch (type) {
+            case 'image':
+                notificationBody = '📷 Đã gửi một hình ảnh';
+                break;
+            case 'file':
+                notificationBody = '📄 Đã gửi một tệp tin';
+                break;
       default: {
         const text = typeof content === 'string' ? content.trim() : '';
         if (text.length > 0) {
           notificationBody = text.length > 50 ? `${text.substring(0, 50)}...` : text;
         } else {
           notificationBody = fallbackBody;
-        }
+                }
         break;
       }
     }
 
+    // Lấy thông tin đầy đủ của người gửi
+    let senderAvatar = '';
+    try {
+      // Thử lấy từ users collection trước
+      const userDoc = await db.collection('users').doc(senderId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        senderAvatar = userData.avatar || userData.photoURL || '';
+      } else {
+        // Nếu không tìm thấy trong users, thử tìm trong workers
+        const workerDoc = await db.collection('workers').doc(senderId).get();
+        if (workerDoc.exists) {
+          const workerData = workerDoc.data();
+          senderAvatar = workerData.avatar || workerData.photoURL || '';
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sender data:', error);
+    }
+    
+    // Thêm tham số transform vào URL ảnh nếu là Cloudinary
+    if (senderAvatar && senderAvatar.includes('cloudinary.com')) {
+      // Kiểm tra xem URL đã có transform chưa
+      if (!senderAvatar.includes('/w_') || !senderAvatar.includes('/c_')) {
+        // Tìm vị trí của '/upload/'
+        const uploadIndex = senderAvatar.indexOf('/upload/') + '/upload/'.length;
+        // Thêm transform vào URL
+        senderAvatar = `${senderAvatar.substring(0, uploadIndex)}w_400,h_400,c_fill/${senderAvatar.substring(uploadIndex)}`;
+        console.log(`🖼️ Optimized image URL: ${senderAvatar}`);
+      }
+    }
+    
+    console.log(`👤 Sender avatar URL: ${senderAvatar || 'Not available'}`);
+    
     // Tạo payload gửi FCM
     const payload = {
       notification: {
         title: `${senderName}`,
-        body: notificationBody,
+                body: notificationBody,
+        // Thêm hình ảnh vào notification (chỉ hoạt động trên một số nền tảng)
+        image: senderAvatar || undefined,
       },
       data: {
+        // Thông tin cơ bản
         type: 'new_message',
-        roomId,
-        senderId,
+        roomId: roomId,
+        senderId: senderId,
+        senderName: senderName, // Thêm tên người gửi vào data
+        senderAvatar: senderAvatar, // Thêm avatar vào data
         messageType: type,
         ...(content && { content }),
         timestamp: Date.now().toString(),
-      },
-      android: {
-        priority: 'high',
-        notification: {
-          sound: 'default',
+        
+        // Thông tin điều hướng
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        route: '/chat',
+        chat_room_id: roomId,
+            },
+            android: {
+                priority: 'high',
+                notification: {
+                    sound: 'default',
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
         },
-      },
-      apns: {
-        headers: {
-          'apns-priority': '10',
-        },
-        payload: {
-          aps: {
-            sound: 'default',
-            badge: 1,
-          },
-        },
-      },
+            },
+            apns: {
+                payload: {
+                    aps: {
+                        sound: 'default',
+                        badge: 1,
+                    },
+                },
+                headers: {
+                    'apns-priority': '10',
+                },
+            },
+      
+      // Thêm thời gian gửi để debug
+      fcmOptions: {
+        analyticsLabel: `chat_${Date.now()}`
+      }
     };
+    
+    // Log toàn bộ payload để debug
+    console.log('📤 FCM Payload to be sent:');
+    console.log(JSON.stringify(payload, null, 2));
+    console.log('📤 End of FCM Payload');
+    
 
     // Gửi FCM đến tất cả các thiết bị của người nhận
     const tokenList = Array.isArray(tokens.devices) ? tokens.devices : [];
@@ -159,16 +215,16 @@ const sendNotification = async (roomId, mes) => {
         ))
         .map(x => x.token);
 
-      if (invalidTokens.length > 0) {
-        await db.collection('devices').doc(receiverId).update({
-          devices: FieldValue.arrayRemove(...invalidTokens)
-        });
+            if (invalidTokens.length > 0) {
+                await db.collection('devices').doc(receiverId).update({
+                    devices: FieldValue.arrayRemove(...invalidTokens)
+                });
         console.log(`🗑️ Removed ${invalidTokens.length} invalid tokens from Firestore`);
-      }
-    }
-  } catch (error) {
+            }
+        }
+    } catch (error) {
     console.error('❌ Error in sendNotification:', error);
-  }
+    }
 };
 
 // Xử lý khi có conversation mới
@@ -188,7 +244,7 @@ const setupConversationListener = () => {
     
     // Tạo reference đến messages của room
     const messagesRef = realtimeDb.ref(`conversations/${roomId}`);
-    
+                
     // Hàm xử lý tin nhắn mới
     const handleNewMessage = (msgSnap) => {
       const message = msgSnap.val();
@@ -206,7 +262,7 @@ const setupConversationListener = () => {
       ref: messagesRef,
       handler: handleNewMessage
     });
-  });
+    });
 };
 
 // Hàm dọn dẹp listeners
@@ -220,7 +276,7 @@ const cleanupListeners = () => {
   });
   
   // Xóa tất cả listeners khỏi Map
-  activeListeners.clear();
+    activeListeners.clear();
   
   // Hủy listener của conversations
   conversationsRef.off("child_added");
@@ -231,8 +287,8 @@ module.exports = { setupConversationListener, cleanupListeners };
 // Xử lý tắt ứng dụng
 process.on('SIGINT', () => {
   console.log('\n🛑 Shutting down gracefully...');
-  cleanupListeners();
-  process.exit(0);
+    cleanupListeners();
+    process.exit(0);
 });
 
 // Khởi động listener (để tránh duplicate, chỉ nên gọi trong index.js)
