@@ -30,15 +30,20 @@ const search = async (req, res ) => {
         
         // Normalize location to dict format
         if (rawLocation) {
+            console.log('[ChatBot] Raw location type:', typeof rawLocation);
+            console.log('[ChatBot] Raw location value:', rawLocation);
+            
             if (typeof rawLocation === 'string') {
                 // If location is string, convert to dict
                 reference['location'] = {
                     name: rawLocation,
                     address: rawLocation
                 };
+                console.log('[ChatBot] Converted string location to dict');
             } else if (typeof rawLocation === 'object') {
                 // If already object, use as is
                 reference['location'] = rawLocation;
+                console.log('[ChatBot] Using object location as is');
             }
         }
 
