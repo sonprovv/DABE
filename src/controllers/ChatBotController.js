@@ -18,13 +18,28 @@ const search = async (req, res ) => {
         let reference = {};
         
         // Get location based on role
+        let rawLocation = null;
         if (role === 'user') {
             const clientData = await UserService.getByUID(clientID);
-            reference['location'] = clientData.location;
+            rawLocation = clientData.location;
         }
         else if (role === 'worker') {
             const clientData = await WorkerService.getByUID(clientID);
-            reference['location'] = clientData.location;
+            rawLocation = clientData.location;
+        }
+        
+        // Normalize location to dict format
+        if (rawLocation) {
+            if (typeof rawLocation === 'string') {
+                // If location is string, convert to dict
+                reference['location'] = {
+                    name: rawLocation,
+                    address: rawLocation
+                };
+            } else if (typeof rawLocation === 'object') {
+                // If already object, use as is
+                reference['location'] = rawLocation;
+            }
         }
 
         // Get experiences for worker
