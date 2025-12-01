@@ -47,8 +47,8 @@ const search = async (req, res ) => {
 
         // Get applied jobs history (for collaborative filtering)
         // TODO: Implement getAppliedJobsByWorker in OrderService
-        // For now, pass empty array
-        reference['applied_jobs'] = [];
+        // For now, don't include applied_jobs if empty
+        // reference['applied_jobs'] = [];  // Don't send empty array
 
         // Prepare request payload
         const payload = {
@@ -64,6 +64,9 @@ const search = async (req, res ) => {
             has_location: !!reference.location,
             has_experiences: !!reference.experiences
         });
+        
+        // Debug: Log full payload
+        console.log('[ChatBot] Full payload:', JSON.stringify(payload, null, 2));
 
         // Call AI API
         const response = await axios.post(
@@ -99,6 +102,11 @@ const search = async (req, res ) => {
             response: err.response?.data,
             status: err.response?.status
         });
+        
+        // Debug: Log detailed error
+        if (err.response?.data?.detail) {
+            console.error('[ChatBot] Validation errors:', JSON.stringify(err.response.data.detail, null, 2));
+        }
 
         // Return user-friendly error
         if (err.response?.status === 500) {
